@@ -868,6 +868,35 @@ function BrandBookRoute() {
     localStorage.setItem("theme", "light");
   }, []);
 
+  useEffect(() => {
+    let keys = "";
+    const secretCode = "admin";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignorar se estiver digitando em algum campo de texto
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
+      keys += e.key.toLowerCase();
+
+      if (keys.length > secretCode.length) {
+        keys = keys.slice(-secretCode.length);
+      }
+
+      if (keys === secretCode) {
+        handleOpenEditModal();
+        keys = "";
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [brand]);
+
   if (!brand) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
 
   const primaryColor = brand.palette.primary[0].hex;
@@ -985,9 +1014,6 @@ function BrandBookRoute() {
       <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-background/80 border-b border-border transition-colors duration-300">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Link to="/" className="p-2 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-300 shrink-0" title="Voltar ao Painel">
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
             <a href="#top" className="flex items-center gap-2 min-w-0">
               <DynamicLogoMark logoUrl={brand.logoUrl} symbolUrl={brand.symbolUrl} logoReverseUrl={brand.logoReverseUrl} symbolReverseUrl={brand.symbolReverseUrl} brandName={brand.name} withWordmark={false} className="h-8 w-8 shrink-0" />
               <span className="font-display font-semibold tracking-tight truncate max-w-[120px] sm:max-w-none">{brand.name}</span>
@@ -995,14 +1021,6 @@ function BrandBookRoute() {
             </a>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={handleOpenEditModal}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border hover:bg-muted text-xs font-semibold text-foreground transition-all duration-300 shadow-sm active:scale-[0.95] shrink-0"
-              title="Editar Manual de Marca"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Editar Manual</span>
-            </button>
             <button
               onClick={() => {
                 setGridMode(!gridMode);
@@ -1068,7 +1086,7 @@ function BrandBookRoute() {
       {/* PRINCÍPIOS */}
       <Section id="principios" eyebrow="00 · Essência" title="O que a marca defende">
         <div className="space-y-12">
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="flex flex-col gap-6">
             {[
               { k: "Missão", v: brand.mission, desc: "A razão de existir da marca todos os dias." },
               { k: "Visão", v: brand.vision, desc: "Onde pretendemos chegar a longo prazo." },
