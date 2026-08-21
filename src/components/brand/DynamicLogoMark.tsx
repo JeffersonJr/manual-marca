@@ -273,22 +273,35 @@ export function DynamicLogoMark({
     }
   }
 
+  const isRawSvg = typeof imgToRender === "string" && imgToRender.trim().startsWith("<svg");
+
   const logoElement = imgToRender ? (
-    <img
-      src={imgToRender}
-      alt={`${brandName} Logo`}
-      className="h-full w-auto max-h-full object-contain"
-      style={{ 
-        filter: filterStyle || undefined,
-        opacity: goldenOverlay !== "none" ? 0.22 : 1
-      }}
-      onLoad={(e) => {
-        const img = e.currentTarget;
-        if (img.naturalHeight) {
-          setImgAspect(img.naturalWidth / img.naturalHeight);
-        }
-      }}
-    />
+    isRawSvg ? (
+      <div
+        className="h-full w-auto max-h-full flex items-center justify-center [&>svg]:h-full [&>svg]:w-auto [&>svg]:max-h-full [&>svg]:object-contain"
+        style={{ 
+          filter: filterStyle || undefined,
+          opacity: goldenOverlay !== "none" ? 0.22 : 1
+        }}
+        dangerouslySetInnerHTML={{ __html: imgToRender }}
+      />
+    ) : (
+      <img
+        src={imgToRender}
+        alt={`${brandName} Logo`}
+        className="h-full w-auto max-h-full object-contain"
+        style={{ 
+          filter: filterStyle || undefined,
+          opacity: goldenOverlay !== "none" ? 0.22 : 1
+        }}
+        onLoad={(e) => {
+          const img = e.currentTarget;
+          if (img.naturalHeight) {
+            setImgAspect(img.naturalWidth / img.naturalHeight);
+          }
+        }}
+      />
+    )
   ) : null;
 
   if (goldenOverlay !== "none") {

@@ -7,7 +7,9 @@ import { saveBrandServer, deleteBrandServer } from "@/lib/api/brands.functions";
 import { LogoMark } from "@/components/brand/LogoMark";
 import { useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
-import { ArrowLeft, Upload, X, Check, Settings } from "lucide-react";
+import { ArrowLeft, Upload, X, Check, Settings, Link2, Copy, Trash2 } from "lucide-react";
+import type { BriefingData } from "@/lib/types";
+import { getCleanHeroTitle, getCleanHeroDescription, getBrandVoiceGuidelines } from "@/lib/brand-utils";
 
 import tshirtMockup from "@/assets/tshirt-mockup.png";
 import bottleMockup from "@/assets/bottle-mockup.png";
@@ -55,6 +57,12 @@ interface BrandData {
     accent: { name: string; hex: string; role: string; token: string }[];
     neutrals: { name: string; hex: string }[];
   };
+  // Dynamic fields from AI generation
+  flow?: "A" | "B";
+  heroTitle?: string;
+  voiceExamples?: { ok: string[]; no: string[] };
+  briefing?: BriefingData;
+  createdAt?: string;
 }
 
 const defaultMicrosistec: BrandData = {
@@ -410,165 +418,190 @@ function getHousePinLogoSvg(variant: 'original' | 'deep' | 'mono-dark' | 'mono-l
   </svg>`;
 }
 
+/**
+ * Gera os textos de UI de demonstração (hero de app, mobile cards, etc.)
+ * 100% dinâmico: baseado nos dados reais do briefing e da essência da marca.
+ * Sem detecção de nicho por nome — usa brand.briefing.nicho e brand.briefing.tomDeVoz.
+ */
 function getAppTexts(brand: BrandData) {
-  const nameLower = brand.name.toLowerCase();
-  const isTech = brand.id === "microsistec" || nameLower.includes("tec") || brand.description.toLowerCase().includes("tecnologia") || brand.description.toLowerCase().includes("software");
-  const isRealEstate = nameLower.includes("imoveis") || nameLower.includes("imóveis") || nameLower.includes("casa") || nameLower.includes("yellow");
-  
-  if (isRealEstate) {
-    return {
-      heroTitle: "Seu novo lar, com total simplicidade.",
-      heroDesc: brand.description || "Encontre os melhores imóveis com atendimento personalizado e processos 100% digitais e transparentes.",
-      button1: "Falar com corretor",
-      button2: "Ver imóveis",
-      mobileGreeting: `Olá, Cliente ${brand.name}.`,
-      mobileSub: "Sua proposta foi aceita!",
-      mobileItems: ["Documentação", "Vistoria", "Contrato"],
-      mobileBtn: "Ver detalhes do imóvel",
-      cardTitle1: "Lançamento",
-      cardSub1: "Residencial Golden Park",
-      cardTitle2: "Atendimento",
-      cardSub2: "Simule seu financiamento",
-      cardTitle3: "Novidade",
-      cardSub3: "Visita virtual 3D disponível",
-      menuItem1: "Imóveis",
-      menuItem2: "Serviços",
-      menuItem3: "Contato"
-    };
-  }
-  
-  if (!isTech) {
-    return {
-      heroTitle: `${brand.promise || "Experiência e qualidade premium."}`,
-      heroDesc: brand.description || "Soluções sob medida para valorizar sua empresa e encantar seus clientes todos os dias.",
-      button1: "Falar com especialista",
-      button2: "Conhecer soluções",
-      mobileGreeting: `Olá, Cliente ${brand.name}.`,
-      mobileSub: "Seu painel está atualizado.",
-      mobileItems: ["Serviços", "Projetos", "Mensagens"],
-      mobileBtn: "Ir para o painel",
-      cardTitle1: "Lançamento",
-      cardSub1: "Novas soluções disponíveis",
-      cardTitle2: "Diferenciais",
-      cardSub2: "Nossa metodologia de trabalho",
-      cardTitle3: "Carreiras",
-      cardSub3: "Faça parte do nosso time",
-      menuItem1: "Soluções",
-      menuItem2: "Sobre Nós",
-      menuItem3: "Contato"
-    };
-  }
-  
+  const nicho = brand.briefing?.nicho?.toLowerCase() ?? "";
+  const publicoAlvo = brand.briefing?.publicoAlvo ?? "clientes";
+  const tom = brand.briefing?.tomDeVoz?.toLowerCase() ?? "";
+  const heroTitle = getCleanHeroTitle(brand);
+  const desc = getCleanHeroDescription(brand);
+
+  // CTA labels adaptados ao tom de voz
+  const isDescontraido = tom.includes("descontraíd") || tom.includes("humano") || tom.includes("casual") || tom.includes("jovem");
+  const isFormal = tom.includes("formal") || tom.includes("técnico") || tom.includes("corporativo");
+  const btn1 = isFormal ? "Solicitar proposta" : isDescontraido ? "Bora conversar" : "Falar com especialista";
+  const btn2 = isFormal ? "Ver documentação" : isDescontraido ? "Ver o que fazemos" : "Conhecer soluções";
+
+  // Menu items adaptados ao nicho
+  const getMenuItems = (): [string, string, string] => {
+    if (nicho.includes("saúde") || nicho.includes("saude") || nicho.includes("clínica") || nicho.includes("médico"))
+      return ["Tratamentos", "Sobre nós", "Agendar"];
+    if (nicho.includes("imóvel") || nicho.includes("imobil") || nicho.includes("construção") || nicho.includes("arquitetura"))
+      return ["Imóveis", "Serviços", "Contato"];
+    if (nicho.includes("moda") || nicho.includes("fashion") || nicho.includes("vestuário") || nicho.includes("luxo"))
+      return ["Coleção", "Sobre", "Loja"];
+    if (nicho.includes("aliment") || nicho.includes("restaurante") || nicho.includes("food") || nicho.includes("gastronomia"))
+      return ["Cardápio", "Nossa história", "Reservas"];
+    if (nicho.includes("educa") || nicho.includes("ensino") || nicho.includes("curso"))
+      return ["Cursos", "Sobre", "Matricule-se"];
+    if (nicho.includes("finanç") || nicho.includes("invest") || nicho.includes("contabil"))
+      return ["Serviços", "Resultados", "Consultoria"];
+    return ["Soluções", "Sobre nós", "Contato"];
+  };
+
+  // Mobile items adaptados ao nicho
+  const getMobileItems = (): [string, string, string] => {
+    if (nicho.includes("saúde") || nicho.includes("saude") || nicho.includes("clínica"))
+      return ["Consultas", "Exames", "Resultados"];
+    if (nicho.includes("imóvel") || nicho.includes("imobil") || nicho.includes("construção"))
+      return ["Documentação", "Vistoria", "Contrato"];
+    if (nicho.includes("moda") || nicho.includes("fashion"))
+      return ["Nova Coleção", "Pedidos", "Favoritos"];
+    if (nicho.includes("educa") || nicho.includes("curso"))
+      return ["Aulas", "Progresso", "Certificados"];
+    if (nicho.includes("finanç") || nicho.includes("invest"))
+      return ["Portfólio", "Relatórios", "Suporte"];
+    return ["Serviços", "Projetos", "Mensagens"];
+  };
+
+  const [menuItem1, menuItem2, menuItem3] = getMenuItems();
+  const [mobileItem1, mobileItem2, mobileItem3] = getMobileItems();
+
   return {
-    heroTitle: "Operações tecnológicas, sem ruído.",
-    heroDesc: "Software sob medida, infra resiliente e atendimento contínuo para empresas que tratam tecnologia como vantagem competitiva.",
-    button1: "Falar com especialista",
-    button2: "Ver capacidades",
-    mobileGreeting: "Olá, Equipe Atlas.",
-    mobileSub: "Tudo operando dentro do SLA.",
-    mobileItems: ["API Gateway", "Workers", "Database"],
-    mobileBtn: "Ver relatório completo",
-    cardTitle1: "Lançamento",
-    cardSub1: "Plataforma Atlas v2",
-    cardTitle2: "Webinar",
-    cardSub2: "Arquitetura para escala",
-    cardTitle3: "Hiring",
-    cardSub3: "SRE · Backend · Data",
-    menuItem1: "Plataforma",
-    menuItem2: "Soluções",
-    menuItem3: "Contato"
+    heroTitle,
+    heroDesc: desc,
+    button1: btn1,
+    button2: btn2,
+    mobileGreeting: `Olá, ${publicoAlvo.split(" ")[0] || "Cliente"}.`,
+    mobileSub: brand.briefing?.diferenciais
+      ? brand.briefing.diferenciais.split(",")[0].trim() + " disponível."
+      : "Seu painel está atualizado.",
+    mobileItems: [mobileItem1, mobileItem2, mobileItem3],
+    mobileBtn: isFormal ? "Acessar relatório" : isDescontraido ? "Ver meu painel" : "Ir para o painel",
+    cardTitle1: "Destaque",
+    cardSub1: brand.values?.[0]?.name ? `${brand.values[0].name} em foco` : "Novidades disponíveis",
+    cardTitle2: "Diferenciais",
+    cardSub2: brand.briefing?.diferenciais?.split(",")[0]?.trim() || "Nossa metodologia",
+    cardTitle3: "Sobre nós",
+    cardSub3: brand.briefing?.personalidade || "Faça parte do nosso time",
+    menuItem1, menuItem2, menuItem3,
   };
 }
 
+/**
+ * Gera as diretrizes de fotografia baseadas no nicho e tom do brand.
+ * 100% dinâmico via brand.briefing.nicho — sem heurísticas de nome.
+ */
 function getImageStyleData(brand: BrandData) {
-  const nameLower = brand.name.toLowerCase();
-  const isTech = brand.id === "microsistec" || nameLower.includes("tec") || brand.description.toLowerCase().includes("tecnologia") || brand.description.toLowerCase().includes("software");
-  const isRealEstate = nameLower.includes("imoveis") || nameLower.includes("imóveis") || nameLower.includes("casa") || nameLower.includes("yellow");
+  const nicho = brand.briefing?.nicho?.toLowerCase() ?? "";
+  const publicoAlvo = brand.briefing?.publicoAlvo ?? "o público-alvo";
+  const estiloVisual = brand.briefing?.estiloVisual?.toLowerCase() ?? "";
   const primary = brand.palette.primary[0]?.hex || "#4f46e5";
   const secondary = brand.palette.secondary[0]?.hex || "#06b6d4";
   const accent = brand.palette.accent[0]?.hex || "#f59e0b";
 
+  // Determina categorias fotográficas baseadas no nicho real
+  const isHealth = nicho.includes("saúde") || nicho.includes("saude") || nicho.includes("clínica") || nicho.includes("médico") || nicho.includes("estética") || nicho.includes("fisioterapia");
+  const isRealEstate = nicho.includes("imóvel") || nicho.includes("imobil") || nicho.includes("construção") || nicho.includes("arquitetura");
+  const isTech = nicho.includes("tech") || nicho.includes("software") || nicho.includes("saas") || nicho.includes("ti ") || nicho.includes("digital") || brand.id === "microsistec";
+  const isFashion = nicho.includes("moda") || nicho.includes("fashion") || nicho.includes("vestuário") || nicho.includes("luxo");
+  const isFood = nicho.includes("aliment") || nicho.includes("restaurante") || nicho.includes("food") || nicho.includes("gastronomia") || nicho.includes("café");
+  const isEducation = nicho.includes("educa") || nicho.includes("ensino") || nicho.includes("curso") || nicho.includes("treinamento");
+
+  if (isHealth) {
+    return {
+      intro: `Imagens transmitem confiança clínica e cuidado humano — sem clichês médicos. Foco em ${publicoAlvo} em contextos reais de cuidado e recuperação.`,
+      categories: [
+        { t: "Ambiente & Cuidado", desc: "Espaços limpos, bem iluminados e humanizados. Priorize luz natural e equipe em ação real.", icon: "🏥", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
+        { t: "Paciente & Resultado", desc: "Momentos autênticos de recuperação, progresso ou consulta. Expressões naturais, sem poses forçadas.", icon: "🤲", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
+        { t: "Equipe & Expertise", desc: "Profissionais em ação real — não posados. Transmita competência e empatia simultâneas.", icon: "👩‍⚕️", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
+      ],
+      doItems: ["Luz natural e suave", "Ambientes organizados e humanizados", "Equipe em contexto real", "Cores calmas alinhadas à paleta"],
+      dontItems: ["Estetoscópio ou seringa em destaque", "Branco frio e asséptico demais", "Sorrisos exagerados de stock", "Imagens hospitalares genéricas"],
+    };
+  }
+
   if (isRealEstate) {
     return {
-      intro: `Imagens devem transmitir conforto, aspiração e confiança — ambientes luminosos, espaços organizados e momentos reais de conquista do imóvel.`,
+      intro: `Imagens transmitem aspiração, solidez e pertencimento — ambientes que evocam o que ${publicoAlvo} deseja conquistar.`,
       categories: [
-        {
-          t: "Ambientes & Interiores",
-          desc: "Espaços abertos, bem iluminados e decorados com bom gosto. Priorize luz natural e composição equilibrada.",
-          icon: "🏠",
-          gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)`,
-        },
-        {
-          t: "Pessoas & Conquistas",
-          desc: "Momentos autênticos de famílias visitando imóveis, assinando contratos ou celebrando a mudança.",
-          icon: "🤝",
-          gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)`,
-        },
-        {
-          t: "Fachadas & Paisagismo",
-          desc: "Exteriores com céu limpo, jardins bem cuidados e arquitetura valorizada. Transmita segurança e desejo.",
-          icon: "🏢",
-          gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)`,
-        },
+        { t: "Espaços & Interiores", desc: "Luz natural, composição equilibrada e atmosfera acolhedora. Destaque os melhores ângulos de cada ambiente.", icon: "🏠", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
+        { t: "Momentos de Conquista", desc: "Pessoas reais em situações autênticas — visita ao imóvel, assinatura ou celebração da nova fase.", icon: "🤝", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
+        { t: "Fachada & Entorno", desc: "Exteriores com céu limpo e paisagismo valorizado. Transmita segurança e desejo ao primeiro olhar.", icon: "🏗️", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
       ],
-      doItems: ["Luz natural abundante", "Ambientes organizados e amplos", "Cores quentes e acolhedoras", "Pessoas autênticas e diversas"],
-      dontItems: ["Fotos escuras ou mal enquadradas", "Imóveis com bagunça visível", "Ângulos distorcidos (fisheye)", "Pessoas posando artificialmente"],
+      doItems: ["Luz natural abundante", "Ambientes organizados e amplos", "Perspectivas que valorizam o espaço", "Pessoas diversas e autênticas"],
+      dontItems: ["Fotos escuras ou com flash duro", "Bagunça ou objetos pessoais visíveis", "Ângulos distorcidos ou fisheye", "Imagens genéricas de banco"],
+    };
+  }
+
+  if (isFashion) {
+    return {
+      intro: `Imagens comunicam o universo estético de ${brand.name} — editorial, intencional e com identidade visual coerente com a paleta da marca.`,
+      categories: [
+        { t: "Editorial & Produto", desc: "Composição intencional, luz controlada e foco absoluto no item. Espaço negativo generoso.", icon: "📷", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
+        { t: "Lifestyle & Uso", desc: `${publicoAlvo} usando a peça em contexto real. Situações aspiracionais mas verossímeis.`, icon: "✨", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
+        { t: "Ambiente & Conceito", desc: "Cenários que reforçam o posicionamento da marca. Cores e texturas alinhadas à paleta da identidade.", icon: "🎨", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
+      ],
+      doItems: ["Luz controlada ou natural difusa", "Paleta de cores alinhada à marca", "Composição minimalista", "Expressões naturais e confiantes"],
+      dontItems: ["Filtros vintage ou supersaturados", "Cenários genéricos ou poluídos", "Logos concorrentes visíveis", "Edição excessiva ou filtros de beleza"],
+    };
+  }
+
+  if (isFood) {
+    return {
+      intro: `Imagens evocam a experiência sensorial de ${brand.name} — textura, frescor, cuidado no preparo e o prazer compartilhado.`,
+      categories: [
+        { t: "Produto & Apresentação", desc: "Close nos pratos ou produtos com foco em textura e frescor. Iluminação que valorize as cores naturais.", icon: "🍽️", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
+        { t: "Processo & Preparo", desc: "Bastidores reais do preparo — mãos em ação, ingredientes frescos, equipe engajada.", icon: "👨‍🍳", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
+        { t: "Experiência & Contexto", desc: "Pessoas desfrutando o momento — refeições, encontros, entrega. Emoção genuína sem poses.", icon: "☕", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
+      ],
+      doItems: ["Luz natural quente", "Foco em textura e frescor", "Cenários limpos e aconchegantes", "Momento de fruição genuíno"],
+      dontItems: ["Fotos frias ou com flash duro", "Pratos já consumidos", "Ângulo de baixo para cima forçado", "Excesso de adereços no cenário"],
+    };
+  }
+
+  if (isEducation) {
+    return {
+      intro: `Imagens traduzem o impacto concreto do aprendizado — progresso visível, colaboração real e ${publicoAlvo} em ação.`,
+      categories: [
+        { t: "Aprendizado & Ação", desc: "Pessoas engajadas no processo de aprendizagem — não posadas. Expressões de concentração e descoberta.", icon: "📚", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
+        { t: "Resultado & Transformação", desc: "Antes/depois, diplomas, apresentações concluídas. Celebre o progresso de forma autêntica.", icon: "🏆", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
+        { t: "Ambiente & Comunidade", desc: "Espaços de estudo, colaboração entre alunos e professores em contexto real.", icon: "👥", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
+      ],
+      doItems: ["Ambientes bem iluminados", "Diversidade real", "Foco em expressões de engajamento", "Tecnologia como ferramenta, não cenário"],
+      dontItems: ["Poses artificiais de 'estudante feliz'", "Espaços genéricos de biblioteca", "Imagens de stock óbvias", "Uniformes obrigatórios ou frieza excessiva"],
     };
   }
 
   if (isTech) {
     return {
-      intro: `Imagens devem comunicar operação real — datacenters, equipes em campo, telas, infraestrutura.`,
+      intro: `Imagens comunicam operação real e consequência técnica — não estética de tendência. ${publicoAlvo} quer ver competência, não decoração.`,
       categories: [
-        {
-          t: "Macro & Detalhe",
-          desc: "Foco extremo em hardware, conectores e texturas digitais. Transmite precisão cirúrgica.",
-          icon: "🔬",
-          gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${primary}11 100%)`,
-        },
-        {
-          t: "Ambiente Humano",
-          desc: "Colaboração real, equipes de engenharia em ação e interação natural com a tecnologia.",
-          icon: "👥",
-          gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)`,
-        },
-        {
-          t: "Arquitetura Digital",
-          desc: "Simetria de datacenters, alinhamento de servidores e cabeamento estruturado complexo.",
-          icon: "🏗️",
-          gradient: `linear-gradient(135deg, ${secondary}22 0%, ${primary}33 50%, ${accent}22 100%)`,
-        },
+        { t: "Detalhe & Precisão", desc: "Foco em elementos técnicos reais — código, interface, hardware. Transmite domínio sem exagero.", icon: "⚙️", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${primary}11 100%)` },
+        { t: "Equipe em Contexto", desc: "Colaboração genuína, reuniões reais, co-criação. Mostre o time que entrega — sem encenação.", icon: "👥", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
+        { t: "Resultado & Escala", desc: "Dashboards reais, infraestrutura em operação, métricas. O impacto do produto visível em dados.", icon: "📊", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${primary}33 50%, ${accent}22 100%)` },
       ],
-      doItems: ["Luz natural ou monocromática", "Composição com respiro", "Cores frias dominantes", "Pessoas em contexto real"],
-      dontItems: ["Filtros saturados", "Texturas decorativas", "Sorrisos forçados de stock", "Sobreposição de gradientes coloridos"],
+      doItems: ["Composição com respiro e foco", "Luz natural ou monocromática", "Contexto de uso real", "Pessoas em situação genuína"],
+      dontItems: ["Sorrisos de stock genérico", "Gradientes decorativos sem propósito", "Ícones de tecnologia clichê", "Imagens de 'inovação' sem contexto"],
     };
   }
 
-  // General / services brands
+  // Default: marcas de serviço/outros — totalmente personalizado com dados reais
+  const isMinimal = estiloVisual.includes("minimal");
+  const isBold = estiloVisual.includes("bold") || estiloVisual.includes("impactante");
   return {
-    intro: `Imagens devem refletir a identidade de ${brand.name} — autenticidade, qualidade e proximidade com o público-alvo da marca.`,
+    intro: `Imagens de ${brand.name} devem comunicar autenticidade e proximidade com ${publicoAlvo}. ${isMinimal ? "Composição limpa, espaço negativo generoso e cores alinhadas à paleta." : isBold ? "Visual impactante, composições dinâmicas e uso intencional da paleta da marca." : "Iluminação equilibrada, contexto real e expressões genuínas em primeiro lugar."}`,
     categories: [
-      {
-        t: "Produto & Serviço",
-        desc: "Fotos que valorizem o produto ou serviço oferecido. Cenários limpos, boa iluminação e destaque no que importa.",
-        icon: "✨",
-        gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)`,
-      },
-      {
-        t: "Equipe & Cultura",
-        desc: "Momentos genuínos do time em ação. Valorize diversidade, colaboração e o ambiente de trabalho real.",
-        icon: "💼",
-        gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)`,
-      },
-      {
-        t: "Lifestyle & Contexto",
-        desc: "O público-alvo interagindo com a marca no dia a dia. Situações reais que criam identificação e confiança.",
-        icon: "📸",
-        gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)`,
-      },
+      { t: "Produto ou Serviço", desc: `Valorize o que ${brand.name} entrega — cenário limpo, iluminação adequada e foco no que mais importa para ${publicoAlvo}.`, icon: "✨", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
+      { t: "Pessoas & Cultura", desc: "Equipe real em ação, colaboração genuína e diversidade. Evite poses corporativas artificiais.", icon: "💼", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
+      { t: "Contexto & Lifestyle", desc: `${publicoAlvo} interagindo com a marca no cotidiano. Situações verossímeis que criam identificação.`, icon: "📸", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
     ],
-    doItems: ["Iluminação natural e equilibrada", "Composição clean e moderna", "Paleta de cores da marca nos cenários", "Expressões naturais e espontâneas"],
-    dontItems: ["Imagens genéricas de banco", "Filtros exagerados ou vintage", "Cenários desorganizados", "Texto sobreposto nas fotos"],
+    doItems: ["Iluminação natural e equilibrada", "Composição intencional", `Paleta de cores de ${brand.name} nos cenários`, "Expressões naturais e espontâneas"],
+    dontItems: ["Imagens genéricas de banco", "Filtros exagerados ou vintage", "Cenários desorganizados ou aleatórios", "Texto sobreposto diretamente nas fotos"],
   };
 }
 
@@ -630,6 +663,7 @@ function BrandBookRoute() {
   // Edit modal states
   const [showEditModal, setShowEditModal] = useState(false);
   const [editBrandName, setEditBrandName] = useState("");
+  const [editHeroTitle, setEditHeroTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editLogoBase64, setEditLogoBase64] = useState<string>("");
   const [editSymbolBase64, setEditSymbolBase64] = useState<string>("");
@@ -683,6 +717,7 @@ function BrandBookRoute() {
   const handleOpenEditModal = () => {
     if (!brand) return;
     setEditBrandName(brand.name);
+    setEditHeroTitle(brand.heroTitle || getCleanHeroTitle(brand));
     setEditDescription(brand.description);
     setEditLogoBase64(brand.logoUrl || "");
     setEditSymbolBase64(brand.symbolUrl || "");
@@ -753,6 +788,7 @@ function BrandBookRoute() {
     const updatedBrand: BrandData = {
       ...brand,
       name: editBrandName,
+      heroTitle: editHeroTitle.trim() || undefined,
       description: editDescription,
       logoUrl: editLogoBase64 || undefined,
       symbolUrl: editSymbolBase64 || undefined,
@@ -1014,6 +1050,14 @@ function BrandBookRoute() {
       <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-background/80 border-b border-border transition-colors duration-300">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
+            <Link
+              to="/"
+              className="p-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all shrink-0 inline-flex items-center gap-1.5 text-xs font-medium"
+              title="Voltar para a Central de Manuais"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden md:inline">Portal</span>
+            </Link>
             <a href="#top" className="flex items-center gap-2 min-w-0">
               <DynamicLogoMark logoUrl={brand.logoUrl} symbolUrl={brand.symbolUrl} logoReverseUrl={brand.logoReverseUrl} symbolReverseUrl={brand.symbolReverseUrl} brandName={brand.name} withWordmark={false} className="h-8 w-8 shrink-0" />
               <span className="font-display font-semibold tracking-tight truncate max-w-[120px] sm:max-w-none">{brand.name}</span>
@@ -1021,18 +1065,69 @@ function BrandBookRoute() {
             </a>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {/* Copy Link Button */}
+            <button
+              id="copy-link-btn"
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href)
+                  .then(() => toast.success("Link copiado! Qualquer pessoa pode acessar este manual.", { icon: "🔗" }))
+                  .catch(() => toast.error("Não foi possível copiar o link."));
+              }}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all text-xs font-medium"
+              title="Copiar link compartilhável"
+            >
+              <Link2 className="w-3.5 h-3.5" />
+              Copiar Link
+            </button>
+            <button
+              id="copy-link-btn-mobile"
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href)
+                  .then(() => toast.success("Link copiado!", { icon: "🔗" }))
+                  .catch(() => toast.error("Não foi possível copiar o link."));
+              }}
+              className="sm:hidden p-2 rounded-lg border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all"
+              title="Copiar link"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+
+            {brand.id !== "microsistec" && (
+              <>
+                <button
+                  onClick={handleOpenEditModal}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all text-xs font-medium"
+                  title="Editar configurações do manual"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Editar
+                </button>
+                <button
+                  onClick={() => {
+                    setDeleteConfirmText("");
+                    setShowDeleteModal(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-destructive/30 text-destructive hover:text-white hover:bg-destructive hover:border-destructive transition-all text-xs font-medium active:scale-95"
+                  title="Excluir este manual"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Excluir</span>
+                </button>
+              </>
+            )}
+
             <button
               onClick={() => {
                 setGridMode(!gridMode);
                 toast.info(gridMode ? "Grid desativado" : "Grid ativado");
               }}
               className={`p-2 rounded-lg border transition-all duration-300 hover:bg-muted ${gridMode ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
+              title="Alternar grade visual"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
             </button>
-
           </div>
         </div>
         
@@ -1067,11 +1162,23 @@ function BrandBookRoute() {
             Manual de Marca · 2026
           </div>
           <h1 className="text-3xl sm:text-5xl md:text-7xl font-semibold tracking-tight max-w-4xl leading-tight">
-            Precisão visual <br/>
-            <span className="text-primary">para uma marca de tecnologia.</span>
+            {(() => {
+              const headline = getCleanHeroTitle(brand);
+              const splitChar = headline.includes(" — ") ? " — " : headline.includes(", ") ? ", " : null;
+              if (splitChar) {
+                const [part1, ...rest] = headline.split(splitChar);
+                return <>{part1}{splitChar}<span className="text-primary">{rest.join(splitChar)}</span></>;
+              }
+              const words = headline.split(" ");
+              if (words.length > 2) {
+                const mid = Math.ceil(words.length / 2);
+                return <>{words.slice(0, mid).join(" ")} <span className="text-primary">{words.slice(mid).join(" ")}</span></>;
+              }
+              return <span className="text-foreground">{headline}</span>;
+            })()}
           </h1>
           <p className="mt-6 max-w-2xl text-base sm:text-lg text-muted-foreground leading-relaxed">
-            {brand.description}
+            {getCleanHeroDescription(brand)}
           </p>
           <div className="mt-12 flex flex-wrap gap-2">
             {["Logo", "Diretrizes", "Cor", "Tipografia", "UI Kit", "Materiais"].map((t) => (
@@ -1709,33 +1816,60 @@ function BrandBookRoute() {
       </Section>
 
       {/* VOZ */}
-      <Section id="voz" eyebrow="09 · Voz" title="Como a marca fala">
-        <div className="space-y-6">
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            Direta, técnica sem ser fria, segura sem soar arrogante. Frases curtas. Verbos no presente.
-          </p>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <VoiceCard kind="ok" title="Escreva assim">
-              <em>“Reduzimos o tempo médio de resposta em 38% no último trimestre.”</em>
-              <br/><em>“Operação 24/7 com observabilidade contínua.”</em>
-              <br/><em>“Você decide. A gente sustenta.”</em>
-            </VoiceCard>
-            <VoiceCard kind="no" title="Evite">
-              <em>“Sinergias disruptivas que revolucionam o ecossistema.”</em>
-              <br/><em>“Soluções de ponta a ponta best-in-class.”</em>
-              <br/><em>“Nossa missão é encantar você.”</em>
-            </VoiceCard>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <div className="text-[11px] font-mono uppercase tracking-widest text-primary mb-4">Tom por contexto</div>
-            <div className="grid grid-cols-3 gap-4 text-xs sm:text-sm">
-              <div><div className="font-semibold">Comercial</div><div className="text-muted-foreground mt-1">Confiante, com prova.</div></div>
-              <div><div className="font-semibold">Produto</div><div className="text-muted-foreground mt-1">Instrutivo, sem rodeios.</div></div>
-              <div><div className="font-semibold">Suporte</div><div className="text-muted-foreground mt-1">Empático, objetivo, resolutivo.</div></div>
+      {(() => {
+        const voice = getBrandVoiceGuidelines(brand);
+        return (
+          <Section id="voz" eyebrow="09 · Voz" title="Como a marca fala">
+            <div className="space-y-8">
+              <div>
+                <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+                  {voice.summary}
+                </p>
+                <div className="flex flex-wrap gap-2.5 mt-4">
+                  {voice.pillars.map((p, idx) => (
+                    <div key={p.name} className="px-3.5 py-1.5 rounded-full border border-border bg-card text-xs flex items-center gap-1.5 shadow-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      <strong className="text-foreground">{p.name}:</strong>
+                      <span className="text-muted-foreground">{p.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <VoiceCard kind="ok" title="Escreva assim">
+                  {voice.okExamples.map((ex, i) => (
+                    <span key={i}>{i > 0 && <br />}<em>{ex}</em></span>
+                  ))}
+                </VoiceCard>
+                <VoiceCard kind="no" title="Evite">
+                  {voice.noExamples.map((ex, i) => (
+                    <span key={i}>{i > 0 && <br />}<em>{ex}</em></span>
+                  ))}
+                </VoiceCard>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card p-6">
+                <div className="text-[11px] font-mono uppercase tracking-widest text-primary mb-4">Tom por contexto</div>
+                <div className="grid sm:grid-cols-3 gap-6 text-xs sm:text-sm">
+                  <div className="space-y-1.5">
+                    <div className="font-semibold text-foreground">{voice.contextTones.comercial.label}</div>
+                    <div className="text-muted-foreground leading-relaxed">{voice.contextTones.comercial.desc}</div>
+                  </div>
+                  <div className="space-y-1.5 border-t sm:border-t-0 sm:border-l border-border/60 pt-4 sm:pt-0 sm:pl-6">
+                    <div className="font-semibold text-foreground">{voice.contextTones.produto.label}</div>
+                    <div className="text-muted-foreground leading-relaxed">{voice.contextTones.produto.desc}</div>
+                  </div>
+                  <div className="space-y-1.5 border-t sm:border-t-0 sm:border-l border-border/60 pt-4 sm:pt-0 sm:pl-6">
+                    <div className="font-semibold text-foreground">{voice.contextTones.suporte.label}</div>
+                    <div className="text-muted-foreground leading-relaxed">{voice.contextTones.suporte.desc}</div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </Section>
+          </Section>
+        );
+      })()}
 
       {/* ACESSIBILIDADE */}
       <Section id="acessibilidade" eyebrow="10 · Acessibilidade" title="Contraste e legibilidade">
@@ -2376,6 +2510,29 @@ $ink: ${brand.palette.neutrals[3].hex};
                 </div>
               </div>
 
+              {/* Hero Title (H1) Input */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground block">
+                    Título Principal / H1 do Manual
+                  </label>
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    {editHeroTitle.length}/75 caracteres
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  maxLength={75}
+                  value={editHeroTitle}
+                  onChange={(e) => setEditHeroTitle(e.target.value)}
+                  placeholder="Ex: Imóveis com transparência e segurança total em Atibaia."
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:border-primary transition-colors text-foreground"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Frase de impacto estilo H1 de site, mantendo foco na essência e nicho da marca (máximo de 75 caracteres).
+                </p>
+              </div>
+
               {/* Custom Domain Input */}
               <div>
                 <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground block mb-1.5">
@@ -2520,7 +2677,7 @@ $ink: ${brand.palette.neutrals[3].hex};
             </div>
 
             <p className="text-xs text-muted-foreground mt-4 leading-relaxed">
-              Para confirmar a exclusão, digite o nome exato da marca <strong className="text-foreground select-all">"{brand.name}"</strong> no campo abaixo:
+              Para confirmar a exclusão, digite o nome da marca <button type="button" onClick={() => setDeleteConfirmText(brand.name)} className="text-foreground underline font-semibold hover:text-destructive transition-colors">"{brand.name}"</button> no campo abaixo:
             </p>
 
             <input
@@ -2541,9 +2698,9 @@ $ink: ${brand.palette.neutrals[3].hex};
               </button>
               <button
                 type="button"
-                disabled={deleteConfirmText !== brand.name}
+                disabled={deleteConfirmText.trim().toLowerCase() !== brand.name.trim().toLowerCase()}
                 onClick={handleDeleteBrand}
-                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold transition-all shadow-md"
+                className="px-5 py-2.5 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold transition-all shadow-md active:scale-95"
               >
                 Confirmar Exclusão
               </button>
