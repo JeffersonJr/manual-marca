@@ -588,14 +588,14 @@ function Dashboard() {
   const handleImportBrand = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       try {
         const data = JSON.parse(reader.result as string);
         if (!data.id || !data.name || !data.palette) { toast.error("Arquivo inválido."); return; }
         if (data.id === "microsistec") { toast.error("Não é possível importar o manual Microsistec."); return; }
         const { _exportVersion, _exportDate, ...brandData } = data;
-        saveBrandToStorage(brandData as Brand);
-        toast.success(`Manual "${brandData.name}" importado!`);
+        await saveBrandToStorage(brandData as Brand);
+        toast.success(`Manual "${brandData.name}" importado e sincronizado com sucesso!`);
       } catch { toast.error("Erro ao ler o arquivo."); }
     };
     reader.readAsText(file);

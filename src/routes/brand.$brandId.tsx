@@ -781,7 +781,7 @@ function BrandBookRoute() {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveEditBrand = (e: React.FormEvent) => {
+  const handleSaveEditBrand = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!brand) return;
 
@@ -835,9 +835,11 @@ function BrandBookRoute() {
      localStorage.setItem("custom_brands", JSON.stringify(updatedBrands));
 
       // Sync modifications to the server
-      saveBrandServer({ data: updatedBrand }).catch((err: any) => {
+      try {
+        await saveBrandServer({ data: updatedBrand });
+      } catch (err: any) {
         console.error("Failed to sync updated brand to server:", err);
-      });
+      }
 
     setBrand(updatedBrand);
     toast.success("Manual de Marca atualizado com sucesso!");
