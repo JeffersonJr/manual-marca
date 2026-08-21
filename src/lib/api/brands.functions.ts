@@ -4,13 +4,12 @@ import fs from "fs/promises";
 import path from "path";
 
 const localFilePath = path.join(process.cwd(), "public/custom-brands.json");
-const KVDB_URL = "https://kvdb.io/AnTigRavItY_Microsistec_Brands_03/brands";
 
 async function readLocalBrands(): Promise<any[]> {
   try {
     const data = await fs.readFile(localFilePath, "utf-8");
     return JSON.parse(data);
-  } catch {
+  } catch (err) {
     return [];
   }
 }
@@ -20,7 +19,7 @@ async function writeLocalBrands(brands: any[]) {
     await fs.mkdir(path.dirname(localFilePath), { recursive: true });
     await fs.writeFile(localFilePath, JSON.stringify(brands, null, 2), "utf-8");
   } catch (err) {
-    console.error("Failed to write local custom brands:", err);
+    console.error("[brands-storage] Failed to write local custom brands:", err);
   }
 }
 
@@ -40,18 +39,8 @@ async function readRemoteBrands(): Promise<any[] | null> {
         }
       }
     } catch (err) {
-      console.error("Vercel KV read failed:", err);
+      console.error("[brands-storage] Vercel KV read failed:", err);
     }
-  }
-
-  // Fallback to kvdb.io
-  try {
-    const response = await fetch(KVDB_URL);
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (err) {
-    console.error("kvdb.io read failed:", err);
   }
 
   return null;
@@ -69,49 +58,39 @@ async function writeRemoteBrands(brands: any[]) {
         body: JSON.stringify(JSON.stringify(brands)),
       });
     } catch (err) {
-      console.error("Vercel KV write failed:", err);
+      console.error("[brands-storage] Vercel KV write failed:", err);
     }
-  }
-
-  // Also write to kvdb.io to ensure global synchronization if no KV, or as redundancy
-  try {
-    await fetch(KVDB_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(brands),
-    });
-  } catch (err) {
-    console.error("kvdb.io write failed:", err);
   }
 }
 
-// Server function to load brands from KV + local file system
+// Server function to load all brands from KV + local file system
 export const loadBrandsServer = createServerFn({ method: "GET" })
   .handler(async () => {
-    // 1. Read remote brands
-    let brands = await readRemoteBrands();
+    // 1. Read remote brands (if Vercel KV is configured)
+    const remoteBrands = await readRemoteBrands();
     
     // 2. Read local brands
     const localBrands = await readLocalBrands();
     
-    // 3. If remote had no data (first initialization), populate it with local brands
-    if (brands === null || brands.length === 0) {
-      brands = localBrands;
-      if (brands.length > 0) {
-        await writeRemoteBrands(brands);
-      }
-    }
-    
-    // 4. Merge them by ID to ensure we don't lose any brand, prioritizing remote edits
+    // 3. Merge them by ID
     const brandMap = new Map<string, any>();
-    for (const b of localBrands) {
-      brandMap.set(b.id, b);
+    for (const b of localBrands || []) {
+      if (b && b.id) brandMap.set(b.id, b);
     }
-    for (const b of brands || []) {
-      brandMap.set(b.id, b);
+    for (const b of remoteBrands || []) {
+      if (b && b.id) brandMap.set(b.id, b);
     }
     
     return Array.from(brandMap.values());
+  });
+
+// Server function to get a single brand by ID
+export const getBrandByIdServer = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ id: z.string() }))
+  .handler(async ({ data }: { data: { id: string } }) => {
+    const { id } = data;
+    const allBrands = await loadBrandsServer();
+    return allBrands.find((b: any) => b.id === id) || null;
   });
 
 // Server function to save a brand (add or update)
@@ -123,19 +102,7 @@ export const saveBrandServer = createServerFn({ method: "POST" })
       throw new Error("Invalid brand data");
     }
     
-    // Load existing remote brands
-    const remoteBrands = await readRemoteBrands() || [];
-    const index = remoteBrands.findIndex((b: any) => b.id === brand.id);
-    if (index >= 0) {
-      remoteBrands[index] = brand;
-    } else {
-      remoteBrands.push(brand);
-    }
-    
-    // Save remote
-    await writeRemoteBrands(remoteBrands);
-    
-    // In local development, also save to custom-brands.json
+    // 1. Save to local filesystem
     try {
       const localBrands = await readLocalBrands();
       const localIndex = localBrands.findIndex((b: any) => b.id === brand.id);
@@ -145,8 +112,25 @@ export const saveBrandServer = createServerFn({ method: "POST" })
         localBrands.push(brand);
       }
       await writeLocalBrands(localBrands);
+      console.log(`[brands-storage] ✅ Marca "${brand.name}" (${brand.id}) salva no arquivo local.`);
     } catch (err) {
-      console.warn("Could not save to local filesystem (e.g. running on serverless):", err);
+      console.warn("[brands-storage] Could not save to local filesystem:", err);
+    }
+
+    // 2. Save to remote KV if configured
+    try {
+      const remoteBrands = await readRemoteBrands();
+      if (remoteBrands) {
+        const index = remoteBrands.findIndex((b: any) => b.id === brand.id);
+        if (index >= 0) {
+          remoteBrands[index] = brand;
+        } else {
+          remoteBrands.push(brand);
+        }
+        await writeRemoteBrands(remoteBrands);
+      }
+    } catch (err) {
+      console.warn("[brands-storage] Could not save to remote KV:", err);
     }
     
     return { success: true };

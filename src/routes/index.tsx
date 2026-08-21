@@ -277,15 +277,22 @@ function Dashboard() {
     return Array.from(map.values());
   }, []);
 
-  const saveBrandToStorage = useCallback((newBrand: Brand) => {
+  const saveBrandToStorage = useCallback(async (newBrand: Brand) => {
     const currentMerged = getMergedBrands();
     const filtered = currentMerged.filter(b => b.id !== newBrand.id);
     const updated = [...filtered, newBrand];
     localStorage.setItem("custom_brands", JSON.stringify(updated));
     const deletedIds: string[] = JSON.parse(localStorage.getItem("deleted_brand_ids") || "[]");
     localStorage.setItem("deleted_brand_ids", JSON.stringify(deletedIds.filter(id => id !== newBrand.id)));
-    saveBrandServer({ data: newBrand }).catch((err: any) => console.error("Failed to sync brand:", err));
+    
+    serverBrandsRef.current = [...serverBrandsRef.current.filter(b => b.id !== newBrand.id), newBrand];
     setBrands([defaultMicrosistec, ...updated]);
+
+    try {
+      await saveBrandServer({ data: newBrand });
+    } catch (err: any) {
+      console.error("Failed to sync brand to server:", err);
+    }
   }, [getMergedBrands]);
 
   // Load brands
@@ -394,7 +401,7 @@ function Dashboard() {
         createdAt: new Date().toISOString(),
       };
 
-      saveBrandToStorage(newBrand);
+      await saveBrandToStorage(newBrand);
       toast.success("Manual de Marca gerado com sucesso!", { id: loadingToastId });
       setShowFlowAModal(false);
       resetFlowA();
@@ -528,7 +535,7 @@ function Dashboard() {
         createdAt: new Date().toISOString(),
       };
 
-      saveBrandToStorage(newBrand);
+      await saveBrandToStorage(newBrand);
       toast.success("Identidade Visual criada com sucesso!");
       setShowFlowBModal(false);
       resetFlowB();

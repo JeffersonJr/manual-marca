@@ -3,7 +3,7 @@
  */
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { DynamicLogoMark } from "@/components/brand/DynamicLogoMark";
-import { saveBrandServer, deleteBrandServer } from "@/lib/api/brands.functions";
+import { saveBrandServer, deleteBrandServer, loadBrandsServer, getBrandByIdServer } from "@/lib/api/brands.functions";
 import { LogoMark } from "@/components/brand/LogoMark";
 import { useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
@@ -857,11 +857,19 @@ function BrandBookRoute() {
   useEffect(() => {
     // Fetch server brands and merge with localStorage
     const loadBrand = async () => {
+      let serverBrand: BrandData | null = null;
       let serverBrands: BrandData[] = [];
+
       try {
-        const resp = await fetch("/custom-brands.json");
-        if (resp.ok) serverBrands = await resp.json();
-      } catch { /* fetch failed, use localStorage only */ }
+        const fetched = await getBrandByIdServer({ data: { id: brandId } });
+        if (fetched) {
+          serverBrand = fetched as BrandData;
+        } else {
+          serverBrands = (await loadBrandsServer()) as BrandData[];
+        }
+      } catch (err) {
+        console.warn("[brand-loader] Falha ao carregar do servidor:", err);
+      }
 
       const localStored = localStorage.getItem("custom_brands");
       const deletedIds: string[] = JSON.parse(localStorage.getItem("deleted_brand_ids") || "[]");
@@ -874,18 +882,21 @@ function BrandBookRoute() {
       // Merge: server first, localStorage overlays
       const map = new Map<string, BrandData>();
       for (const b of serverBrands) {
-        if (!deletedIds.includes(b.id)) map.set(b.id, b);
+        if (b && !deletedIds.includes(b.id)) map.set(b.id, b);
       }
       for (const b of localBrands) {
-        if (!deletedIds.includes(b.id)) map.set(b.id, b);
+        if (b && !deletedIds.includes(b.id)) map.set(b.id, b);
+      }
+      if (serverBrand && !deletedIds.includes(serverBrand.id)) {
+        map.set(serverBrand.id, serverBrand);
       }
 
       const found = map.get(brandId);
 
       if (found) {
         setBrand(found);
-        setContrastFg(found.palette.primary[0].hex);
-        setContrastBg(found.palette.accent[1]?.hex || found.palette.neutrals[0].hex);
+        setContrastFg(found.palette?.primary?.[0]?.hex || "#2B5250");
+        setContrastBg(found.palette?.accent?.[1]?.hex || found.palette?.neutrals?.[0]?.hex || "#F7F3EA");
       } else if (brandId === "microsistec") {
         setBrand(defaultMicrosistec);
         setContrastFg(defaultMicrosistec.palette.primary[0].hex);
