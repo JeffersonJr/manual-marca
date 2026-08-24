@@ -62,8 +62,8 @@ async function readNeonDeletedBrandIds(): Promise<string[]> {
   if (!sql) return [];
   try {
     await ensureTable();
-    const rows = await sql`SELECT id FROM deleted_brands;`;
-    return rows.map((r: any) => r.id);
+    const rows = (await sql`SELECT id FROM deleted_brands;`) as Array<{ id: string }>;
+    return Array.isArray(rows) ? rows.map((r) => r.id) : [];
   } catch (err) {
     console.error("[brands-storage] Neon Postgres read deleted brands failed:", err);
     return [];
@@ -75,10 +75,12 @@ async function readNeonBrands(): Promise<any[] | null> {
   if (!sql) return null;
   try {
     await ensureTable();
-    const rows = await sql`
+    const rows = (await sql`
       SELECT data FROM custom_brands ORDER BY updated_at DESC;
-    `;
-    return rows.map((r: any) => (typeof r.data === "string" ? JSON.parse(r.data) : r.data));
+    `) as Array<{ data: any }>;
+    return Array.isArray(rows)
+      ? rows.map((r) => (typeof r.data === "string" ? JSON.parse(r.data) : r.data))
+      : [];
   } catch (err) {
     console.error("[brands-storage] Neon Postgres read failed:", err);
     return null;
