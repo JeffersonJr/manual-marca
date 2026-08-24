@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Plus, Palette, Eye, ArrowRight, Upload, X, Check, Download,
   FileUp, Wand2, RefreshCw, Sparkles, ChevronRight, Loader2,
-  Link2, ImagePlus, Pencil, Trash2,
+  Link2, ImagePlus, Pencil, Trash2, Lock, KeyRound, EyeOff, LogOut,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { DynamicLogoMark } from "@/components/brand/DynamicLogoMark";
@@ -15,6 +15,7 @@ import { generateLogosWithAI, refineLogoWithAI, regenerateAllLogosWithAI, genera
 import { generateManualWithAI } from "@/lib/api/ai-manual.functions";
 import type { Brand, BriefingData, GeneratedLogo } from "@/lib/types";
 import { getCleanHeroTitle, getCleanHeroDescription } from "@/lib/brand-utils";
+import { isAdminAuthenticated, loginAdmin, logoutAdmin } from "@/lib/auth";
 
 export const Route = createFileRoute("/")(
   {
@@ -105,7 +106,7 @@ function svgToDataUrl(svgCode: string): string {
 }
 
 import { DEFAULT_BRANDS, defaultMicrosistec } from "@/data/default-brands";
-import { sortBrandsWithMicrosistecFirst } from "@/lib/utils";
+import { sortBrandsWithMicrosistecFirst, slugify, matchBrandByIdOrSlug } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -173,6 +174,35 @@ function Dashboard() {
   const router = useRouter();
   const [brands, setBrands] = useState<Brand[]>(() => sortBrandsWithMicrosistecFirst(DEFAULT_BRANDS));
   const serverBrandsRef = useRef<Brand[]>([]);
+
+  // ── Authentication states ──
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState(false);
+
+  useEffect(() => {
+    setIsAuthenticated(isAdminAuthenticated());
+  }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginAdmin(passwordInput)) {
+      setIsAuthenticated(true);
+      setLoginError(false);
+      toast.success("Bem-vindo ao painel administrativo!");
+    } else {
+      setLoginError(true);
+      toast.error("Senha incorreta. Tente novamente.");
+    }
+  };
+
+  const handleLogout = () => {
+    logoutAdmin();
+    setIsAuthenticated(false);
+    setPasswordInput("");
+    toast.info("Painel bloqueado com sucesso.");
+  };
 
   // ── Modal visibility ──
   const [showFlowSelector, setShowFlowSelector] = useState(false);
@@ -346,7 +376,7 @@ function Dashboard() {
         data: { briefing, primaryColor: faPrimaryColor, secondaryColor: faSecondaryColor, accentColor: faAccentColor },
       });
 
-      const newBrandId = faBrandName.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      const newBrandId = slugify(faBrandName);
 
       const newBrand: Brand = {
         id: newBrandId,
@@ -476,7 +506,7 @@ function Dashboard() {
       });
 
       const brandName = fbNome.trim();
-      const newBrandId = brandName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      const newBrandId = slugify(brandName);
       
       // Gera as 4 variações oficiais a partir do SVG aprovado:
       const variations = generateBrandSvgVariations(selectedLogo.svgCode);
@@ -579,6 +609,96 @@ function Dashboard() {
     }
   };
 
+  // ── Auth Gate ──
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated === false) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col justify-center items-center p-6 relative overflow-hidden">
+        <Toaster position="top-center" duration={3500} richColors />
+        <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
+
+        {/* Decorative gradient blurs */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-md w-full relative z-10">
+          <div className="bg-card border border-border rounded-3xl shadow-2xl p-8 backdrop-blur-xl">
+            {/* Logo & Header */}
+            <div className="text-center mb-8">
+              <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground font-display font-bold text-2xl shadow-lg mx-auto mb-4">
+                M
+              </div>
+              <h1 className="text-2xl font-bold font-display tracking-tight text-foreground">
+                Painel de Identidade Visual
+              </h1>
+              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                Portal restrito da <strong>Microsistec & Evolves</strong> para criação e administração de manuais de marca.
+              </p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground flex items-center justify-between">
+                  <span>Senha de Acesso</span>
+                  <KeyRound className="w-3.5 h-3.5 text-muted-foreground" />
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={passwordInput}
+                    onChange={(e) => {
+                      setPasswordInput(e.target.value);
+                      if (loginError) setLoginError(false);
+                    }}
+                    placeholder="Digite a senha de administrador..."
+                    className={`w-full h-12 px-4 pr-11 rounded-2xl bg-background border ${loginError ? "border-destructive focus:ring-destructive/20" : "border-border focus:ring-primary/20"} text-foreground text-sm focus:outline-none focus:ring-2 focus:border-primary transition-all font-mono`}
+                    autoFocus
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {loginError && (
+                  <p className="text-xs text-destructive font-medium mt-1">
+                    Senha incorreta. Verifique e tente novamente.
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
+              >
+                <Lock className="w-4 h-4" />
+                Entrar no Painel
+              </button>
+            </form>
+
+            <div className="mt-8 pt-6 border-t border-border/60 text-center">
+              <p className="text-[11px] text-muted-foreground">
+                Ambiente protegido. Clientes com link direto acessam seu respectivo manual sem necessidade de login.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Render ──
   return (
     <div className="min-h-screen bg-background text-foreground relative">
@@ -608,6 +728,14 @@ function Dashboard() {
             >
               <Plus className="w-4 h-4" />
               Novo Manual
+            </button>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all text-xs font-medium"
+              title="Bloquear e sair do painel"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sair</span>
             </button>
           </div>
         </div>

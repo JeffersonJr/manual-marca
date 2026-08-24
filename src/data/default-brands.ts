@@ -684,7 +684,7 @@ export const DEFAULT_BRANDS: Brand[] = [
     }
   },
   {
-    "id": "yara-imveis",
+    "id": "yara-imoveis",
     "name": "Yara Imóveis Atibaia",
     "description": "Sistema de identidade visual de Yara Imóveis, desenvolvido para o segmento de Imobiliária.",
     "heroTitle": "Yara Imóveis — Imóveis e consultoria de confiança em Atibaia.",

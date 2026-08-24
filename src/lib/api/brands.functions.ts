@@ -64,7 +64,7 @@ async function writeRemoteBrands(brands: any[]) {
 }
 
 import { DEFAULT_BRANDS } from "@/data/default-brands";
-import { sortBrandsWithMicrosistecFirst } from "@/lib/utils";
+import { sortBrandsWithMicrosistecFirst, matchBrandByIdOrSlug } from "@/lib/utils";
 
 // Server function to load all brands from static defaults + KV + local file system
 export const loadBrandsServer = createServerFn({ method: "GET" })
@@ -97,7 +97,7 @@ export const getBrandByIdServer = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: { id: string } }) => {
     const { id } = data;
     const allBrands = await loadBrandsServer();
-    return allBrands.find((b: any) => b.id === id) || null;
+    return matchBrandByIdOrSlug(allBrands, id);
   });
 
 // Server function to save a brand (add or update)

@@ -7,11 +7,12 @@ import { saveBrandServer, deleteBrandServer, loadBrandsServer, getBrandByIdServe
 import { LogoMark } from "@/components/brand/LogoMark";
 import { useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
-import { Upload, X, Check, Settings, Link2, Copy, Trash2 } from "lucide-react";
+import { Upload, X, Check, Settings, Link2, Copy, Trash2, Lock, ArrowLeft, ShieldAlert, Eye, EyeOff, LayoutDashboard } from "lucide-react";
 import type { BriefingData } from "@/lib/types";
 import { getCleanHeroTitle, getCleanHeroDescription, getBrandVoiceGuidelines } from "@/lib/brand-utils";
 import { DEFAULT_BRANDS, defaultMicrosistec } from "@/data/default-brands";
-import { sortBrandsWithMicrosistecFirst } from "@/lib/utils";
+import { sortBrandsWithMicrosistecFirst, matchBrandByIdOrSlug } from "@/lib/utils";
+import { isAdminAuthenticated, loginAdmin } from "@/lib/auth";
 
 import tshirtMockup from "@/assets/tshirt-mockup.png";
 import bottleMockup from "@/assets/bottle-mockup.png";
@@ -577,6 +578,37 @@ function BrandBookRoute() {
   const { brandId } = Route.useParams();
   const router = useRouter();
   const [brand, setBrand] = useState<BrandData | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Admin Auth Modal states
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authPassword, setAuthPassword] = useState("");
+  const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [authPendingAction, setAuthPendingAction] = useState<"edit" | "delete" | null>(null);
+
+  useEffect(() => {
+    setIsAdmin(isAdminAuthenticated());
+  }, []);
+
+  const handleAdminAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginAdmin(authPassword)) {
+      setIsAdmin(true);
+      setShowAuthModal(false);
+      setAuthPassword("");
+      toast.success("Acesso administrativo autorizado!");
+      if (authPendingAction === "edit") {
+        handleOpenEditModal();
+      } else if (authPendingAction === "delete") {
+        setDeleteConfirmText("");
+        setShowDeleteModal(true);
+      }
+      setAuthPendingAction(null);
+    } else {
+      toast.error("Senha incorreta. Tente novamente.");
+    }
+  };
 
   const handleDownloadLogo = async (variant: 'original' | 'deep' | 'mono-dark' | 'mono-light' | 'reverse', withWordmark: boolean, nameSuffix: string) => {
     if (!brand) return;
@@ -864,12 +896,19 @@ function BrandBookRoute() {
         map.set(serverBrand.id, serverBrand);
       }
 
-      const found = map.get(brandId) || (DEFAULT_BRANDS.find(b => b.id === brandId) as BrandData | undefined) || (defaultMicrosistec as BrandData);
+      const allMerged = Array.from(map.values());
+      const found = matchBrandByIdOrSlug(allMerged, brandId) || 
+                    (serverBrand ? matchBrandByIdOrSlug([serverBrand], brandId) : null) ||
+                    matchBrandByIdOrSlug(DEFAULT_BRANDS as BrandData[], brandId);
 
       if (found) {
         setBrand(found);
+        setNotFound(false);
         setContrastFg(found.palette?.primary?.[0]?.hex || "#2B5250");
         setContrastBg(found.palette?.accent?.[1]?.hex || found.palette?.neutrals?.[0]?.hex || "#F7F3EA");
+      } else {
+        setBrand(null);
+        setNotFound(true);
       }
     };
     loadBrand();
@@ -902,14 +941,53 @@ function BrandBookRoute() {
       }
 
       if (keys === secretCode) {
-        handleOpenEditModal();
         keys = "";
+        if (isAdminAuthenticated()) {
+          setIsAdmin(true);
+          handleOpenEditModal();
+        } else {
+          setAuthPendingAction("edit");
+          setShowAuthModal(true);
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [brand]);
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center">
+        <Toaster position="top-center" duration={3000} richColors />
+        <div className="max-w-md w-full bg-card p-8 rounded-3xl border border-border shadow-xl">
+          <div className="w-16 h-16 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mx-auto mb-6">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-bold font-display tracking-tight text-foreground">Manual não encontrado</h1>
+          <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+            O manual de marca com identificador <code className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs text-foreground font-semibold">{decodeURIComponent(brandId)}</code> não foi localizado ou foi removido.
+          </p>
+          <div className="mt-8 flex flex-col gap-3">
+            <button
+              onClick={() => router.navigate({ to: "/" })}
+              className="w-full py-3 px-4 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Acessar Painel Administrativo
+            </button>
+            <button
+              onClick={() => window.history.back()}
+              className="w-full py-2.5 px-4 rounded-xl border border-border text-muted-foreground hover:text-foreground font-medium text-sm transition-all flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Voltar à página anterior
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!brand) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
 
@@ -1062,28 +1140,52 @@ function BrandBookRoute() {
               <Copy className="w-4 h-4" />
             </button>
 
-            {brand.id !== "microsistec" && (
+            {/* Admin actions (only visible if admin is authenticated) */}
+            {isAdmin ? (
               <>
                 <button
-                  onClick={handleOpenEditModal}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all text-xs font-medium"
-                  title="Editar configurações do manual"
+                  onClick={() => router.navigate({ to: "/" })}
+                  className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted transition-all text-xs font-medium"
+                  title="Voltar para o Painel Geral"
                 >
-                  <Settings className="w-3.5 h-3.5" />
-                  Editar
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  Painel Admin
                 </button>
-                <button
-                  onClick={() => {
-                    setDeleteConfirmText("");
-                    setShowDeleteModal(true);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-destructive/30 text-destructive hover:text-white hover:bg-destructive hover:border-destructive transition-all text-xs font-medium active:scale-95"
-                  title="Excluir este manual"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Excluir</span>
-                </button>
+                {brand.id !== "microsistec" && (
+                  <>
+                    <button
+                      onClick={handleOpenEditModal}
+                      className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all text-xs font-medium"
+                      title="Editar configurações do manual"
+                    >
+                      <Settings className="w-3.5 h-3.5" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDeleteConfirmText("");
+                        setShowDeleteModal(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-destructive/30 text-destructive hover:text-white hover:bg-destructive hover:border-destructive transition-all text-xs font-medium active:scale-95"
+                      title="Excluir este manual"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Excluir</span>
+                    </button>
+                  </>
+                )}
               </>
+            ) : (
+              <button
+                onClick={() => {
+                  setAuthPendingAction("edit");
+                  setShowAuthModal(true);
+                }}
+                className="p-2 rounded-lg border border-border/60 text-muted-foreground/40 hover:text-foreground hover:border-border transition-all"
+                title="Acesso Administrativo"
+              >
+                <Lock className="w-3.5 h-3.5" />
+              </button>
             )}
 
             <button
@@ -2313,6 +2415,75 @@ $ink: ${brand.palette.neutrals[3].hex};
           </div>
         </div>
       </footer>
+
+      {/* Admin Auth Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-card w-full max-w-md rounded-3xl border border-border shadow-2xl p-6 md:p-8 relative">
+            <button
+              onClick={() => {
+                setShowAuthModal(false);
+                setAuthPassword("");
+                setAuthPendingAction(null);
+              }}
+              className="absolute top-6 right-6 p-2 rounded-full border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+              <Lock className="w-6 h-6" />
+            </div>
+
+            <h2 className="text-xl font-display font-bold tracking-tight text-foreground">Acesso Administrativo</h2>
+            <p className="text-xs text-muted-foreground mt-1">Digite a senha de administrador para gerenciar e editar este manual de marca.</p>
+
+            <form onSubmit={handleAdminAuthSubmit} className="mt-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Senha de Acesso</label>
+                <div className="relative">
+                  <input
+                    type={showAuthPassword ? "text" : "password"}
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    placeholder="Digite a senha..."
+                    className="w-full h-11 px-4 pr-10 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono"
+                    autoFocus
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthPassword(!showAuthPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showAuthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAuthModal(false);
+                    setAuthPassword("");
+                    setAuthPendingAction(null);
+                  }}
+                  className="flex-1 h-11 rounded-xl border border-border text-muted-foreground hover:text-foreground font-medium text-sm transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-all shadow-md active:scale-[0.98]"
+                >
+                  Entrar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {showEditModal && (
