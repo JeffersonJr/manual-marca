@@ -2411,7 +2411,7 @@ $ink: ${brand.palette.neutrals[3].hex};
             </div>
           </div>
           <div className="text-xs text-muted-foreground font-mono">
-            {brand.id === "microsistec" ? "jefferson.campos@microsistec.com.br" : `contato@${brand.id}.com.br`}
+            © {new Date().getFullYear()} {brand.name} · Todos os direitos reservados
           </div>
         </div>
       </footer>
