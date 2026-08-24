@@ -45,9 +45,28 @@ async function ensureTable() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS deleted_brands (
+        id TEXT PRIMARY KEY,
+        deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `;
     tableInitialized = true;
   } catch (err) {
     console.error("[brands-storage] Failed to initialize Neon Postgres table:", err);
+  }
+}
+
+async function readNeonDeletedBrandIds(): Promise<string[]> {
+  const sql = getSql();
+  if (!sql) return [];
+  try {
+    await ensureTable();
+    const rows = await sql`SELECT id FROM deleted_brands;`;
+    return rows.map((r: any) => r.id);
+  } catch (err) {
+    console.error("[brands-storage] Neon Postgres read deleted brands failed:", err);
+    return [];
   }
 }
 
@@ -80,6 +99,9 @@ async function writeNeonBrand(brand: any): Promise<boolean> {
           data = EXCLUDED.data,
           updated_at = NOW();
     `;
+    await sql`
+      DELETE FROM deleted_brands WHERE id = ${brand.id};
+    `;
     console.log(`[brands-storage] ✅ Marca "${brand.name}" (${brand.id}) salva no Neon Postgres.`);
     return true;
   } catch (err) {
@@ -94,6 +116,7 @@ async function deleteNeonBrand(id: string): Promise<boolean> {
   try {
     await ensureTable();
     await sql`DELETE FROM custom_brands WHERE id = ${id};`;
+    await sql`INSERT INTO deleted_brands (id, deleted_at) VALUES (${id}, NOW()) ON CONFLICT (id) DO NOTHING;`;
     return true;
   } catch (err) {
     console.error("[brands-storage] Neon Postgres delete failed:", err);
@@ -177,28 +200,29 @@ async function writeRemoteBrands(brands: any[]) {
 export const loadBrandsServer = createServerFn({ method: "GET" })
   .handler(async () => {
     const brandMap = new Map<string, any>();
+    const deletedIds = await readNeonDeletedBrandIds();
 
     // 1. Static built-in default brands bundled in the codebase
     for (const b of DEFAULT_BRANDS) {
-      if (b && b.id) brandMap.set(b.id, b);
+      if (b && b.id && !deletedIds.includes(b.id)) brandMap.set(b.id, b);
     }
     
     // 2. Read from Neon Postgres (if connected)
     const neonBrands = await readNeonBrands();
     for (const b of neonBrands || []) {
-      if (b && b.id) brandMap.set(b.id, b);
+      if (b && b.id && !deletedIds.includes(b.id)) brandMap.set(b.id, b);
     }
 
     // 3. Read remote brands (if Vercel KV / Redis is configured)
     const remoteBrands = await readRemoteBrands();
     for (const b of remoteBrands || []) {
-      if (b && b.id) brandMap.set(b.id, b);
+      if (b && b.id && !deletedIds.includes(b.id)) brandMap.set(b.id, b);
     }
 
     // 4. Read local brands from custom-brands.json if present
     const localBrands = await readLocalBrands();
     for (const b of localBrands || []) {
-      if (b && b.id) brandMap.set(b.id, b);
+      if (b && b.id && !deletedIds.includes(b.id)) brandMap.set(b.id, b);
     }
     
     return sortBrandsWithMicrosistecFirst(Array.from(brandMap.values()));
