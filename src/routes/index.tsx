@@ -104,44 +104,8 @@ function svgToDataUrl(svgCode: string): string {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Default brand (Microsistec — kept for demo purposes)
-// ---------------------------------------------------------------------------
-const defaultMicrosistec: Brand = {
-  id: "microsistec",
-  name: "Microsistec",
-  description: "Sistema de identidade visual robusto e minimalista construído para a Microsistec.",
-  mission: "Tornar a tecnologia previsível para empresas que dependem dela todos os dias.",
-  vision: "Ser o sistema invisível por trás das operações digitais mais confiáveis do país.",
-  promise: "Precisão de engenheiro, clareza de designer, ritmo de operador.",
-  values: [
-    { name: "Precisão", description: "Grid rígido, alinhamentos exatos, números monoespaçados." },
-    { name: "Confiança", description: "Verde profundo, contraste alto, tipografia sem ornamentos." },
-    { name: "Inovação", description: "Espaço negativo generoso, transições sutis, geometria limpa." },
-    { name: "Simplicidade", description: "Menos elementos, mais hierarquia. Sempre uma ação primária." },
-  ],
-  palette: {
-    primary: [
-      { name: "Microsistec Teal", hex: "#2B5250", role: "Cor primária. Logo, headers, CTAs principais.", token: "--teal-deep" },
-      { name: "Graphite Ink", hex: "#1A1A1A", role: "Wordmark e texto principal.", token: "--ink" },
-    ],
-    secondary: [
-      { name: "Aqua Signal", hex: "#5AA6A6", role: "Apoio, ícones, destaques sutis.", token: "--teal-mid" },
-      { name: "Mint Lume", hex: "#7CC1C1", role: "Backgrounds suaves, ilustrações.", token: "--teal-light" },
-      { name: "Deep Shade", hex: "#1B2A2A", role: "Profundidade, dark UI.", token: "--teal-shadow" },
-    ],
-    accent: [
-      { name: "Signal Amber", hex: "#E8A14B", role: "Alertas, badges, hover ativos.", token: "--amber" },
-      { name: "Paper Cream", hex: "#F7F3EA", role: "Fundo alternativo, materiais impressos.", token: "--cream" },
-    ],
-    neutrals: [
-      { name: "Snow", hex: "#FAFBFB" },
-      { name: "Fog", hex: "#E8EDED" },
-      { name: "Slate", hex: "#6B7878" },
-      { name: "Ink", hex: "#1A1A1A" },
-    ],
-  },
-};
+import { DEFAULT_BRANDS, defaultMicrosistec } from "@/data/default-brands";
+import { sortBrandsWithMicrosistecFirst } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -207,7 +171,7 @@ function UploadZone({
 // ---------------------------------------------------------------------------
 function Dashboard() {
   const router = useRouter();
-  const [brands, setBrands] = useState<Brand[]>([defaultMicrosistec]);
+  const [brands, setBrands] = useState<Brand[]>(() => sortBrandsWithMicrosistecFirst(DEFAULT_BRANDS));
   const serverBrandsRef = useRef<Brand[]>([]);
 
   // ── Modal visibility ──
@@ -257,10 +221,6 @@ function Dashboard() {
   const [isRefining, setIsRefining] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
-  // ── Drag-drop ──
-  const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
-
   // ── Delete Brand Modal ──
   const [brandToDelete, setBrandToDelete] = useState<Brand | null>(null);
   const [isDeletingBrand, setIsDeletingBrand] = useState(false);
@@ -272,21 +232,31 @@ function Dashboard() {
     let localBrands: Brand[] = [];
     if (localStored) { try { localBrands = JSON.parse(localStored); } catch { /* ignore */ } }
     const map = new Map<string, Brand>();
-    for (const b of serverBrandsRef.current) { if (!deletedIds.includes(b.id)) map.set(b.id, b); }
-    for (const b of localBrands) { if (!deletedIds.includes(b.id)) map.set(b.id, b); }
-    return Array.from(map.values());
+    // 1. Static built-in default brands bundled in the codebase
+    for (const b of DEFAULT_BRANDS) {
+      if (!deletedIds.includes(b.id)) map.set(b.id, b);
+    }
+    // 2. Server loaded brands (KV / dynamic)
+    for (const b of serverBrandsRef.current) {
+      if (!deletedIds.includes(b.id)) map.set(b.id, b);
+    }
+    // 3. LocalStorage brands
+    for (const b of localBrands) {
+      if (!deletedIds.includes(b.id)) map.set(b.id, b);
+    }
+    return sortBrandsWithMicrosistecFirst(Array.from(map.values()));
   }, []);
 
   const saveBrandToStorage = useCallback(async (newBrand: Brand) => {
     const currentMerged = getMergedBrands();
     const filtered = currentMerged.filter(b => b.id !== newBrand.id);
-    const updated = [...filtered, newBrand];
+    const updated = sortBrandsWithMicrosistecFirst([...filtered, newBrand]);
     localStorage.setItem("custom_brands", JSON.stringify(updated));
     const deletedIds: string[] = JSON.parse(localStorage.getItem("deleted_brand_ids") || "[]");
     localStorage.setItem("deleted_brand_ids", JSON.stringify(deletedIds.filter(id => id !== newBrand.id)));
     
-    serverBrandsRef.current = [...serverBrandsRef.current.filter(b => b.id !== newBrand.id), newBrand];
-    setBrands([defaultMicrosistec, ...updated]);
+    serverBrandsRef.current = sortBrandsWithMicrosistecFirst([...serverBrandsRef.current.filter(b => b.id !== newBrand.id), newBrand]);
+    setBrands(getMergedBrands());
 
     try {
       await saveBrandServer({ data: newBrand });
@@ -300,9 +270,9 @@ function Dashboard() {
     loadBrandsServer()
       .then((serverBrands: Brand[]) => {
         serverBrandsRef.current = serverBrands;
-        setBrands([defaultMicrosistec, ...getMergedBrands()]);
+        setBrands(getMergedBrands());
       })
-      .catch(() => setBrands([defaultMicrosistec, ...getMergedBrands()]));
+      .catch(() => setBrands(getMergedBrands()));
   }, [getMergedBrands]);
 
   // Domain redirect
@@ -547,35 +517,6 @@ function Dashboard() {
     }
   };
 
-  // ── Drag-drop handlers ──
-  const handleDragStart = (e: React.DragEvent, id: string) => {
-    if (id === "microsistec") { e.preventDefault(); return; }
-    e.dataTransfer.setData("text/plain", id);
-    setDraggedId(id);
-  };
-  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
-  const handleDrop = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    if (targetId === "microsistec") return;
-    const dragId = e.dataTransfer.getData("text/plain");
-    if (!dragId || dragId === targetId || dragId === "microsistec") return;
-    try {
-      const customBrands = getMergedBrands();
-      const draggedIndex = customBrands.findIndex(b => b.id === dragId);
-      const targetIndex = customBrands.findIndex(b => b.id === targetId);
-      if (draggedIndex === -1 || targetIndex === -1) return;
-      const updated = [...customBrands];
-      const [removed] = updated.splice(draggedIndex, 1);
-      updated.splice(targetIndex, 0, removed);
-      localStorage.setItem("custom_brands", JSON.stringify(updated));
-      saveAllBrandsServer({ data: updated }).catch((err: any) => console.error(err));
-      setBrands([defaultMicrosistec, ...updated]);
-      toast.success("Ordem atualizada!");
-    } catch (err) { console.error(err); }
-    setDraggedId(null); setDragOverId(null);
-  };
-  const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
-
   // ── Export/Import ──
   const handleExportBrand = (brand: Brand) => {
     const blob = new Blob([JSON.stringify({ ...brand, _exportVersion: "2.0", _exportDate: new Date().toISOString() }, null, 2)], { type: "application/json" });
@@ -613,7 +554,7 @@ function Dashboard() {
       if (stored) {
         try {
           const parsed: Brand[] = JSON.parse(stored);
-          const filtered = parsed.filter(b => b.id !== id);
+          const filtered = sortBrandsWithMicrosistecFirst(parsed.filter(b => b.id !== id));
           localStorage.setItem("custom_brands", JSON.stringify(filtered));
         } catch { /* ignore */ }
       }
@@ -627,7 +568,7 @@ function Dashboard() {
       await deleteBrandServer({ data: { id } }).catch((err: any) => console.error("Error deleting from server:", err));
 
       // 4. Update UI
-      setBrands(prev => prev.filter(b => b.id !== id));
+      setBrands(prev => sortBrandsWithMicrosistecFirst(prev.filter(b => b.id !== id)));
       toast.success(`Manual "${brandToDelete.name}" excluído com sucesso!`);
       setBrandToDelete(null);
     } catch (err) {
@@ -747,18 +688,7 @@ function Dashboard() {
           {brands.map((brand) => (
             <div
               key={brand.id}
-              draggable={brand.id !== "microsistec"}
-              onDragStart={(e) => handleDragStart(e, brand.id)}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, brand.id)}
-              onDragEnd={handleDragEnd}
-              onDragEnter={() => { if (brand.id !== "microsistec") setDragOverId(brand.id); }}
-              onDragLeave={() => setDragOverId(null)}
-              className={`group rounded-2xl border p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-300 ${
-                brand.id !== "microsistec" ? "cursor-grab active:cursor-grabbing hover:border-primary/50" : "hover:border-primary/30"
-              } ${draggedId === brand.id ? "opacity-30 scale-[0.97] border-dashed" : ""} ${
-                dragOverId === brand.id ? "border-dashed border-primary bg-primary/5 scale-[1.01]" : "border-border bg-card"
-              }`}
+              className="group rounded-2xl border border-border bg-card p-6 flex flex-col justify-between hover:shadow-xl hover:border-primary/40 transition-all duration-300"
             >
               <div>
                 <div className="flex justify-between items-start mb-5">

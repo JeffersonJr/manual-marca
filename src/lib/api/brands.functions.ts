@@ -63,25 +63,32 @@ async function writeRemoteBrands(brands: any[]) {
   }
 }
 
-// Server function to load all brands from KV + local file system
+import { DEFAULT_BRANDS } from "@/data/default-brands";
+import { sortBrandsWithMicrosistecFirst } from "@/lib/utils";
+
+// Server function to load all brands from static defaults + KV + local file system
 export const loadBrandsServer = createServerFn({ method: "GET" })
   .handler(async () => {
-    // 1. Read remote brands (if Vercel KV is configured)
-    const remoteBrands = await readRemoteBrands();
-    
-    // 2. Read local brands
-    const localBrands = await readLocalBrands();
-    
-    // 3. Merge them by ID
     const brandMap = new Map<string, any>();
+
+    // 1. Static built-in default brands bundled in the codebase
+    for (const b of DEFAULT_BRANDS) {
+      if (b && b.id) brandMap.set(b.id, b);
+    }
+    
+    // 2. Read local brands from custom-brands.json if present
+    const localBrands = await readLocalBrands();
     for (const b of localBrands || []) {
       if (b && b.id) brandMap.set(b.id, b);
     }
+    
+    // 3. Read remote brands (if Vercel KV is configured)
+    const remoteBrands = await readRemoteBrands();
     for (const b of remoteBrands || []) {
       if (b && b.id) brandMap.set(b.id, b);
     }
     
-    return Array.from(brandMap.values());
+    return sortBrandsWithMicrosistecFirst(Array.from(brandMap.values()));
   });
 
 // Server function to get a single brand by ID
@@ -111,7 +118,8 @@ export const saveBrandServer = createServerFn({ method: "POST" })
       } else {
         localBrands.push(brand);
       }
-      await writeLocalBrands(localBrands);
+      const sortedLocal = sortBrandsWithMicrosistecFirst(localBrands);
+      await writeLocalBrands(sortedLocal);
       console.log(`[brands-storage] ✅ Marca "${brand.name}" (${brand.id}) salva no arquivo local.`);
     } catch (err) {
       console.warn("[brands-storage] Could not save to local filesystem:", err);
@@ -127,7 +135,8 @@ export const saveBrandServer = createServerFn({ method: "POST" })
         } else {
           remoteBrands.push(brand);
         }
-        await writeRemoteBrands(remoteBrands);
+        const sortedRemote = sortBrandsWithMicrosistecFirst(remoteBrands);
+        await writeRemoteBrands(sortedRemote);
       }
     } catch (err) {
       console.warn("[brands-storage] Could not save to remote KV:", err);
@@ -144,13 +153,13 @@ export const deleteBrandServer = createServerFn({ method: "POST" })
     
     // Load remote brands, filter and save
     let remoteBrands = await readRemoteBrands() || [];
-    remoteBrands = remoteBrands.filter((b: any) => b.id !== id);
+    remoteBrands = sortBrandsWithMicrosistecFirst(remoteBrands.filter((b: any) => b.id !== id));
     await writeRemoteBrands(remoteBrands);
     
     // Load local brands, filter and save
     try {
       let localBrands = await readLocalBrands();
-      localBrands = localBrands.filter((b: any) => b.id !== id);
+      localBrands = sortBrandsWithMicrosistecFirst(localBrands.filter((b: any) => b.id !== id));
       await writeLocalBrands(localBrands);
     } catch (err) {
       console.warn("Could not delete from local filesystem (e.g. running on serverless):", err);
@@ -163,7 +172,7 @@ export const deleteBrandServer = createServerFn({ method: "POST" })
 export const saveAllBrandsServer = createServerFn({ method: "POST" })
   .inputValidator(z.array(z.any()))
   .handler(async ({ data }: { data: any[] }) => {
-    const brands = data;
+    const brands = sortBrandsWithMicrosistecFirst(data);
     
     // Save remote
     await writeRemoteBrands(brands);

@@ -1,15 +1,17 @@
 /**
  * Criado e desenvolvido por Evolves Tecnologia (Jefferson Campos)
  */
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { DynamicLogoMark } from "@/components/brand/DynamicLogoMark";
 import { saveBrandServer, deleteBrandServer, loadBrandsServer, getBrandByIdServer } from "@/lib/api/brands.functions";
 import { LogoMark } from "@/components/brand/LogoMark";
 import { useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
-import { ArrowLeft, Upload, X, Check, Settings, Link2, Copy, Trash2 } from "lucide-react";
+import { Upload, X, Check, Settings, Link2, Copy, Trash2 } from "lucide-react";
 import type { BriefingData } from "@/lib/types";
 import { getCleanHeroTitle, getCleanHeroDescription, getBrandVoiceGuidelines } from "@/lib/brand-utils";
+import { DEFAULT_BRANDS, defaultMicrosistec } from "@/data/default-brands";
+import { sortBrandsWithMicrosistecFirst } from "@/lib/utils";
 
 import tshirtMockup from "@/assets/tshirt-mockup.png";
 import bottleMockup from "@/assets/bottle-mockup.png";
@@ -65,41 +67,7 @@ interface BrandData {
   createdAt?: string;
 }
 
-const defaultMicrosistec: BrandData = {
-  id: "microsistec",
-  name: "Microsistec",
-  description: "Este sistema define como a identidade da Microsistec se comporta em qualquer superfície — de uma tela retina a uma camiseta de evento. Construído sobre três pilares: clareza geométrica, tipografia silenciosa e um verde que respira tecnologia.",
-  mission: "Tornar a tecnologia previsível para empresas que dependem dela todos os dias.",
-  vision: "Ser o sistema invisível por trás das operações digitais mais confiáveis do país.",
-  promise: "Precisão de engenheiro, clareza de designer, ritmo de operador.",
-  values: [
-    { name: "Precisão", description: "Grid rígido, alinhamentos exatos, números monoespaçados." },
-    { name: "Confiança", description: "Verde profundo, contraste alto, tipografia sem ornamentos." },
-    { name: "Inovação", description: "Espaço negativo generoso, transições sutis, geometria limpa." },
-    { name: "Simplicidade", description: "Menos elements, mais hierarquia. Sempre uma ação primária." },
-  ],
-  palette: {
-    primary: [
-      { name: "Microsistec Teal", hex: "#2B5250", role: "Cor primária. Logo, headers, CTAs principais.", token: "--teal-deep" },
-      { name: "Graphite Ink", hex: "#1A1A1A", role: "Wordmark e texto principal.", token: "--ink" },
-    ],
-    secondary: [
-      { name: "Aqua Signal", hex: "#5AA6A6", role: "Apoio, ícones, destaques sutis.", token: "--teal-mid" },
-      { name: "Mint Lume", hex: "#7CC1C1", role: "Backgrounds suaves, ilustrações.", token: "--teal-light" },
-      { name: "Deep Shade", hex: "#1B2A2A", role: "Profundidade, dark UI.", token: "--teal-shadow" },
-    ],
-    accent: [
-      { name: "Signal Amber", hex: "#E8A14B", role: "Alertas, badges, hover ativos.", token: "--amber" },
-      { name: "Paper Cream", hex: "#F7F3EA", role: "Fundo alternativo, materiais impressos.", token: "--cream" },
-    ],
-    neutrals: [
-      { name: "Snow", hex: "#FAFBFB" },
-      { name: "Fog", hex: "#E8EDED" },
-      { name: "Slate", hex: "#6B7878" },
-      { name: "Ink", hex: "#1A1A1A" },
-    ],
-  },
-};
+
 
 function Swatch({ name, hex, role, token, dark }: { name: string; hex: string; role?: string; token?: string; dark?: boolean }) {
   const handleCopy = () => {
@@ -688,7 +656,7 @@ function BrandBookRoute() {
       const stored = localStorage.getItem("custom_brands");
       if (stored) {
         const brands: BrandData[] = JSON.parse(stored);
-        const filtered = brands.filter(b => b.id !== brand.id);
+        const filtered = sortBrandsWithMicrosistecFirst(brands.filter(b => b.id !== brand.id));
         localStorage.setItem("custom_brands", JSON.stringify(filtered));
       }
 
@@ -828,9 +796,9 @@ function BrandBookRoute() {
      const exists = currentBrands.some(b => b.id === brand.id);
      let updatedBrands: BrandData[];
      if (exists) {
-       updatedBrands = currentBrands.map(b => b.id === brand.id ? updatedBrand : b);
+       updatedBrands = sortBrandsWithMicrosistecFirst(currentBrands.map(b => b.id === brand.id ? updatedBrand : b));
      } else {
-       updatedBrands = [...currentBrands, updatedBrand];
+       updatedBrands = sortBrandsWithMicrosistecFirst([...currentBrands, updatedBrand]);
      }
      localStorage.setItem("custom_brands", JSON.stringify(updatedBrands));
 
@@ -881,8 +849,11 @@ function BrandBookRoute() {
         try { localBrands = JSON.parse(localStored); } catch { /* ignore */ }
       }
 
-      // Merge: server first, localStorage overlays
+      // Merge: defaults first, then server, then localStorage
       const map = new Map<string, BrandData>();
+      for (const b of DEFAULT_BRANDS) {
+        if (b && !deletedIds.includes(b.id)) map.set(b.id, b as BrandData);
+      }
       for (const b of serverBrands) {
         if (b && !deletedIds.includes(b.id)) map.set(b.id, b);
       }
@@ -893,18 +864,12 @@ function BrandBookRoute() {
         map.set(serverBrand.id, serverBrand);
       }
 
-      const found = map.get(brandId);
+      const found = map.get(brandId) || (DEFAULT_BRANDS.find(b => b.id === brandId) as BrandData | undefined) || (defaultMicrosistec as BrandData);
 
       if (found) {
         setBrand(found);
         setContrastFg(found.palette?.primary?.[0]?.hex || "#2B5250");
         setContrastBg(found.palette?.accent?.[1]?.hex || found.palette?.neutrals?.[0]?.hex || "#F7F3EA");
-      } else if (brandId === "microsistec") {
-        setBrand(defaultMicrosistec);
-        setContrastFg(defaultMicrosistec.palette.primary[0].hex);
-        setContrastBg(defaultMicrosistec.palette.accent[1].hex);
-      } else {
-        setBrand(defaultMicrosistec);
       }
     };
     loadBrand();
@@ -1063,14 +1028,6 @@ function BrandBookRoute() {
       <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-background/80 border-b border-border transition-colors duration-300">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Link
-              to="/"
-              className="p-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all shrink-0 inline-flex items-center gap-1.5 text-xs font-medium"
-              title="Voltar para a Central de Manuais"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden md:inline">Portal</span>
-            </Link>
             <a href="#top" className="flex items-center gap-2 min-w-0">
               <DynamicLogoMark logoUrl={brand.logoUrl} symbolUrl={brand.symbolUrl} logoReverseUrl={brand.logoReverseUrl} symbolReverseUrl={brand.symbolReverseUrl} brandName={brand.name} withWordmark={false} className="h-8 w-8 shrink-0" />
               <span className="font-display font-semibold tracking-tight truncate max-w-[120px] sm:max-w-none">{brand.name}</span>
@@ -2756,10 +2713,10 @@ const compressSignaturePhoto = (base64Str: string): Promise<string> => {
 };
 
 function EmailSignatureSection({ brand }: { brand: BrandData }) {
-  const [name, setName] = useState("Jefferson Campos");
-  const [role, setRole] = useState("Product designer");
-  const [email, setEmail] = useState(`jefferson.campos@${brand.id}.com.br`);
-  const [phone, setPhone] = useState("+55 13 98132-6869");
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [photoBase64, setPhotoBase64] = useState<string>("");
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2777,25 +2734,36 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
   };
 
   const primaryColor = brand.palette.primary[0].hex;
+  const displayName = name.trim() || "Nome Sobrenome";
+  const displayRole = role.trim() || "Cargo / Função";
+  const displayEmail = email.trim() || `contato@${brand.id}.com.br`;
+  const displayPhone = phone.trim() || "+55 (00) 00000-0000";
+  const initials = (name.trim() || "NS")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "NS";
 
   // Simple clean HTML signature markup
   const signatureHtml = `<table cellpadding="0" cellspacing="0" border="0" style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; color: #1a1a1a;">
   <tr>
     <td style="padding-right: 15px; vertical-align: middle;">
       ${photoBase64 ? `
-        <img src="${photoBase64}" width="56" height="56" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; display: block; border: 0;" alt="${name}" />
+        <img src="${photoBase64}" width="56" height="56" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; display: block; border: 0;" alt="${displayName}" />
       ` : `
         <div style="width: 56px; height: 56px; border-radius: 50%; background-color: ${primaryColor}; text-align: center; line-height: 56px; color: #ffffff; font-weight: bold; font-size: 20px;">
-          ${name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()}
+          ${initials}
         </div>
       `}
     </td>
     <td style="border-left: 2px solid ${primaryColor}; padding-left: 15px; vertical-align: middle;">
-      <div style="font-size: 16px; font-weight: bold; color: #1a1a1a;">${name}</div>
-      <div style="font-size: 13px; color: #666666;">${role} &middot; ${brand.name}</div>
+      <div style="font-size: 16px; font-weight: bold; color: #1a1a1a;">${displayName}</div>
+      <div style="font-size: 13px; color: #666666;">${displayRole} &middot; ${brand.name}</div>
       <div style="margin-top: 8px; font-size: 12px; color: #666666; font-family: monospace;">
-        <div>Email: <a href="mailto:${email}" style="color: ${primaryColor}; text-decoration: none;">${email}</a></div>
-        <div>Tel: ${phone}</div>
+        <div>Email: <a href="mailto:${displayEmail}" style="color: ${primaryColor}; text-decoration: none;">${displayEmail}</a></div>
+        <div>Tel: ${displayPhone}</div>
         <div>Site: <a href="https://${brand.id}.com" style="color: ${primaryColor}; text-decoration: none;">${brand.id}.com</a></div>
       </div>
     </td>
@@ -2852,7 +2820,8 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                placeholder="Ex: Jefferson Campos"
+                className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 placeholder:text-muted-foreground/50"
               />
             </div>
             <div>
@@ -2864,7 +2833,8 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
                 type="text"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                placeholder="Ex: Product Designer"
+                className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 placeholder:text-muted-foreground/50"
               />
             </div>
             <div>
@@ -2876,7 +2846,8 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                placeholder={`Ex: contato@${brand.id}.com.br`}
+                className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 placeholder:text-muted-foreground/50"
               />
             </div>
             <div>
@@ -2888,7 +2859,8 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
                 type="text"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                placeholder="Ex: +55 (11) 99999-9999"
+                className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 placeholder:text-muted-foreground/50"
               />
             </div>
             <div>
@@ -3002,19 +2974,19 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
                 <tr>
                   <td style={{ paddingRight: "15px", verticalAlign: "middle" }}>
                     {photoBase64 ? (
-                      <img src={photoBase64} width="56" height="56" style={{ width: "56px", height: "56px", borderRadius: "50%", objectFit: "cover", display: "block", border: 0 }} alt={name} />
+                      <img src={photoBase64} width="56" height="56" style={{ width: "56px", height: "56px", borderRadius: "50%", objectFit: "cover", display: "block", border: 0 }} alt={displayName} />
                     ) : (
                       <div style={{ width: "56px", height: "56px", borderRadius: "50%", backgroundColor: primaryColor, textAlign: "center", lineHeight: "56px", color: "#ffffff", fontWeight: "bold", fontSize: "20px" }}>
-                        {name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()}
+                        {initials}
                       </div>
                     )}
                   </td>
                   <td style={{ borderLeft: `2px solid ${primaryColor}`, paddingLeft: "15px", verticalAlign: "middle" }}>
-                    <div style={{ fontSize: "16px", fontWeight: "bold", color: "#1a1a1a" }}>{name}</div>
-                    <div style={{ fontSize: "13px", color: "#666666" }}>{role} &middot; {brand.name}</div>
+                    <div style={{ fontSize: "16px", fontWeight: "bold", color: "#1a1a1a" }}>{displayName}</div>
+                    <div style={{ fontSize: "13px", color: "#666666" }}>{displayRole} &middot; {brand.name}</div>
                     <div style={{ marginTop: "8px", fontSize: "12px", color: "#666666", fontFamily: "monospace" }}>
-                      <div>Email: <a href={`mailto:${email}`} style={{ color: primaryColor, textDecoration: "none" }}>{email}</a></div>
-                      <div>Tel: {phone}</div>
+                      <div>Email: <a href={`mailto:${displayEmail}`} style={{ color: primaryColor, textDecoration: "none" }}>{displayEmail}</a></div>
+                      <div>Tel: {displayPhone}</div>
                       <div>Site: <a href={`https://${brand.id}.com`} style={{ color: primaryColor, textDecoration: "none" }}>{brand.id}.com</a></div>
                     </div>
                   </td>
