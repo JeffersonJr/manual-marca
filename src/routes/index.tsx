@@ -21,7 +21,7 @@ export const Route = createFileRoute("/")(
   {
     head: () => ({
       meta: [
-        { title: "Manual de Marca — Portal de Identidades Visuais" },
+        { title: "Manual de Marca - Portal de Identidades Visuais" },
         { name: "description", content: "Crie e gerencie manuais de marca e identidades visuais completas com inteligência artificial." },
       ],
       links: [
@@ -916,7 +916,7 @@ function Dashboard() {
                   </div>
                   <div>
                     <div className="font-semibold text-sm group-hover:text-teal-700 transition-colors">Padronizar minha Marca</div>
-                    <div className="text-xs text-muted-foreground">Já tenho um logo — quero gerar o manual</div>
+                    <div className="text-xs text-muted-foreground">Já tenho um logo - quero gerar o manual</div>
                   </div>
                   <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
                 </div>
@@ -931,7 +931,7 @@ function Dashboard() {
                   </div>
                   <div>
                     <div className="font-semibold text-sm group-hover:text-violet-700 transition-colors">Criar Identidade Visual Completa</div>
-                    <div className="text-xs text-muted-foreground">Não tenho logo — a IA cria tudo do zero</div>
+                    <div className="text-xs text-muted-foreground">Não tenho logo - a IA cria tudo do zero</div>
                   </div>
                   <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
                 </div>
@@ -942,7 +942,7 @@ function Dashboard() {
       )}
 
       {/* ════════════════════════════════════════════════════════════════
-          MODAL: FLUXO A — Padronizar Marca com Logo Existente
+          MODAL: FLUXO A - Padronizar Marca com Logo Existente
       ════════════════════════════════════════════════════════════════ */}
       {showFlowAModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -955,7 +955,7 @@ function Dashboard() {
               <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-teal-600 bg-teal-500/10 px-2 py-0.5 rounded-full">Fluxo A</span>
             </div>
             <h2 className="text-2xl font-display font-bold mt-2">Padronizar minha Marca</h2>
-            <p className="text-sm text-muted-foreground mt-1">Faça upload das variações de logo e preencha o briefing — a IA gera o manual completo.</p>
+            <p className="text-sm text-muted-foreground mt-1">Faça upload das variações de logo e preencha o briefing - a IA gera o manual completo.</p>
 
             <form onSubmit={handleCreateBrandFlowA} className="mt-7 space-y-6">
               {/* Assets */}
@@ -1023,7 +1023,7 @@ function Dashboard() {
               {/* Essência (opcional - se deixar vazio a IA gera) */}
               <div>
                 <h3 className="text-xs font-mono uppercase tracking-widest text-primary border-b border-border/80 pb-2 mb-4">
-                  Essência da Marca <span className="text-muted-foreground font-sans lowercase font-normal tracking-normal">(opcional — IA gera automaticamente)</span>
+                  Essência da Marca <span className="text-muted-foreground font-sans lowercase font-normal tracking-normal">(opcional - IA gera automaticamente)</span>
                 </h3>
                 <div className="grid sm:grid-cols-3 gap-4">
                   <div>
@@ -1080,7 +1080,7 @@ function Dashboard() {
       )}
 
       {/* ════════════════════════════════════════════════════════════════
-          MODAL: FLUXO B — Criar Identidade Visual do Zero
+          MODAL: FLUXO B - Criar Identidade Visual do Zero
       ════════════════════════════════════════════════════════════════ */}
       {showFlowBModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">

@@ -7,7 +7,7 @@ import { saveBrandServer, deleteBrandServer, loadBrandsServer, getBrandByIdServe
 import { LogoMark } from "@/components/brand/LogoMark";
 import { useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
-import { Upload, X, Check, Settings, Link2, Copy, Trash2, Lock, ArrowLeft, ShieldAlert, Eye, EyeOff, LayoutDashboard } from "lucide-react";
+import { Upload, X, Check, Settings, Link2, Copy, Trash2, Lock, ArrowLeft, ShieldAlert, Eye, EyeOff, LayoutDashboard, Plus } from "lucide-react";
 import type { BriefingData } from "@/lib/types";
 import { getCleanHeroTitle, getCleanHeroDescription, getBrandVoiceGuidelines } from "@/lib/brand-utils";
 import { DEFAULT_BRANDS, defaultMicrosistec } from "@/data/default-brands";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/brand/$brandId")({
     const brandId = params.brandId;
     return {
       meta: [
-        { title: `${brandId.toUpperCase()} — Sistema de Identidade Visual` },
+        { title: `${brandId.toUpperCase()} - Sistema de Identidade Visual` },
         { name: "description", content: "Manual de marca e sistema de identidade visual." },
       ],
       links: [
@@ -390,7 +390,7 @@ function getHousePinLogoSvg(variant: 'original' | 'deep' | 'mono-dark' | 'mono-l
 /**
  * Gera os textos de UI de demonstração (hero de app, mobile cards, etc.)
  * 100% dinâmico: baseado nos dados reais do briefing e da essência da marca.
- * Sem detecção de nicho por nome — usa brand.briefing.nicho e brand.briefing.tomDeVoz.
+ * Sem detecção de nicho por nome - usa brand.briefing.nicho e brand.briefing.tomDeVoz.
  */
 function getAppTexts(brand: BrandData) {
   const nicho = brand.briefing?.nicho?.toLowerCase() ?? "";
@@ -463,7 +463,7 @@ function getAppTexts(brand: BrandData) {
 
 /**
  * Gera as diretrizes de fotografia baseadas no nicho e tom do brand.
- * 100% dinâmico via brand.briefing.nicho — sem heurísticas de nome.
+ * 100% dinâmico via brand.briefing.nicho - sem heurísticas de nome.
  */
 function getImageStyleData(brand: BrandData) {
   const nicho = brand.briefing?.nicho?.toLowerCase() ?? "";
@@ -483,11 +483,11 @@ function getImageStyleData(brand: BrandData) {
 
   if (isHealth) {
     return {
-      intro: `Imagens transmitem confiança clínica e cuidado humano — sem clichês médicos. Foco em ${publicoAlvo} em contextos reais de cuidado e recuperação.`,
+      intro: `Imagens transmitem confiança clínica e cuidado humano - sem clichês médicos. Foco em ${publicoAlvo} em contextos reais de cuidado e recuperação.`,
       categories: [
         { t: "Ambiente & Cuidado", desc: "Espaços limpos, bem iluminados e humanizados. Priorize luz natural e equipe em ação real.", icon: "🏥", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
         { t: "Paciente & Resultado", desc: "Momentos autênticos de recuperação, progresso ou consulta. Expressões naturais, sem poses forçadas.", icon: "🤲", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
-        { t: "Equipe & Expertise", desc: "Profissionais em ação real — não posados. Transmita competência e empatia simultâneas.", icon: "👩‍⚕️", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
+        { t: "Equipe & Expertise", desc: "Profissionais em ação real - não posados. Transmita competência e empatia simultâneas.", icon: "👩‍⚕️", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
       ],
       doItems: ["Luz natural e suave", "Ambientes organizados e humanizados", "Equipe em contexto real", "Cores calmas alinhadas à paleta"],
       dontItems: ["Estetoscópio ou seringa em destaque", "Branco frio e asséptico demais", "Sorrisos exagerados de stock", "Imagens hospitalares genéricas"],
@@ -496,10 +496,10 @@ function getImageStyleData(brand: BrandData) {
 
   if (isRealEstate) {
     return {
-      intro: `Imagens transmitem aspiração, solidez e pertencimento — ambientes que evocam o que ${publicoAlvo} deseja conquistar.`,
+      intro: `Imagens transmitem aspiração, solidez e pertencimento - ambientes que evocam o que ${publicoAlvo} deseja conquistar.`,
       categories: [
         { t: "Espaços & Interiores", desc: "Luz natural, composição equilibrada e atmosfera acolhedora. Destaque os melhores ângulos de cada ambiente.", icon: "🏠", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
-        { t: "Momentos de Conquista", desc: "Pessoas reais em situações autênticas — visita ao imóvel, assinatura ou celebração da nova fase.", icon: "🤝", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
+        { t: "Momentos de Conquista", desc: "Pessoas reais em situações autênticas - visita ao imóvel, assinatura ou celebração da nova fase.", icon: "🤝", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
         { t: "Fachada & Entorno", desc: "Exteriores com céu limpo e paisagismo valorizado. Transmita segurança e desejo ao primeiro olhar.", icon: "🏗️", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
       ],
       doItems: ["Luz natural abundante", "Ambientes organizados e amplos", "Perspectivas que valorizam o espaço", "Pessoas diversas e autênticas"],
@@ -509,7 +509,7 @@ function getImageStyleData(brand: BrandData) {
 
   if (isFashion) {
     return {
-      intro: `Imagens comunicam o universo estético de ${brand.name} — editorial, intencional e com identidade visual coerente com a paleta da marca.`,
+      intro: `Imagens comunicam o universo estético de ${brand.name} - editorial, intencional e com identidade visual coerente com a paleta da marca.`,
       categories: [
         { t: "Editorial & Produto", desc: "Composição intencional, luz controlada e foco absoluto no item. Espaço negativo generoso.", icon: "📷", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
         { t: "Lifestyle & Uso", desc: `${publicoAlvo} usando a peça em contexto real. Situações aspiracionais mas verossímeis.`, icon: "✨", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
@@ -522,11 +522,11 @@ function getImageStyleData(brand: BrandData) {
 
   if (isFood) {
     return {
-      intro: `Imagens evocam a experiência sensorial de ${brand.name} — textura, frescor, cuidado no preparo e o prazer compartilhado.`,
+      intro: `Imagens evocam a experiência sensorial de ${brand.name} - textura, frescor, cuidado no preparo e o prazer compartilhado.`,
       categories: [
         { t: "Produto & Apresentação", desc: "Close nos pratos ou produtos com foco em textura e frescor. Iluminação que valorize as cores naturais.", icon: "🍽️", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
-        { t: "Processo & Preparo", desc: "Bastidores reais do preparo — mãos em ação, ingredientes frescos, equipe engajada.", icon: "👨‍🍳", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
-        { t: "Experiência & Contexto", desc: "Pessoas desfrutando o momento — refeições, encontros, entrega. Emoção genuína sem poses.", icon: "☕", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
+        { t: "Processo & Preparo", desc: "Bastidores reais do preparo - mãos em ação, ingredientes frescos, equipe engajada.", icon: "👨‍🍳", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
+        { t: "Experiência & Contexto", desc: "Pessoas desfrutando o momento - refeições, encontros, entrega. Emoção genuína sem poses.", icon: "☕", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
       ],
       doItems: ["Luz natural quente", "Foco em textura e frescor", "Cenários limpos e aconchegantes", "Momento de fruição genuíno"],
       dontItems: ["Fotos frias ou com flash duro", "Pratos já consumidos", "Ângulo de baixo para cima forçado", "Excesso de adereços no cenário"],
@@ -535,9 +535,9 @@ function getImageStyleData(brand: BrandData) {
 
   if (isEducation) {
     return {
-      intro: `Imagens traduzem o impacto concreto do aprendizado — progresso visível, colaboração real e ${publicoAlvo} em ação.`,
+      intro: `Imagens traduzem o impacto concreto do aprendizado - progresso visível, colaboração real e ${publicoAlvo} em ação.`,
       categories: [
-        { t: "Aprendizado & Ação", desc: "Pessoas engajadas no processo de aprendizagem — não posadas. Expressões de concentração e descoberta.", icon: "📚", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
+        { t: "Aprendizado & Ação", desc: "Pessoas engajadas no processo de aprendizagem - não posadas. Expressões de concentração e descoberta.", icon: "📚", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
         { t: "Resultado & Transformação", desc: "Antes/depois, diplomas, apresentações concluídas. Celebre o progresso de forma autêntica.", icon: "🏆", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
         { t: "Ambiente & Comunidade", desc: "Espaços de estudo, colaboração entre alunos e professores em contexto real.", icon: "👥", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
       ],
@@ -548,10 +548,10 @@ function getImageStyleData(brand: BrandData) {
 
   if (isTech) {
     return {
-      intro: `Imagens comunicam operação real e consequência técnica — não estética de tendência. ${publicoAlvo} quer ver competência, não decoração.`,
+      intro: `Imagens comunicam operação real e consequência técnica - não estética de tendência. ${publicoAlvo} quer ver competência, não decoração.`,
       categories: [
-        { t: "Detalhe & Precisão", desc: "Foco em elementos técnicos reais — código, interface, hardware. Transmite domínio sem exagero.", icon: "⚙️", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${primary}11 100%)` },
-        { t: "Equipe em Contexto", desc: "Colaboração genuína, reuniões reais, co-criação. Mostre o time que entrega — sem encenação.", icon: "👥", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
+        { t: "Detalhe & Precisão", desc: "Foco em elementos técnicos reais - código, interface, hardware. Transmite domínio sem exagero.", icon: "⚙️", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${primary}11 100%)` },
+        { t: "Equipe em Contexto", desc: "Colaboração genuína, reuniões reais, co-criação. Mostre o time que entrega - sem encenação.", icon: "👥", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
         { t: "Resultado & Escala", desc: "Dashboards reais, infraestrutura em operação, métricas. O impacto do produto visível em dados.", icon: "📊", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${primary}33 50%, ${accent}22 100%)` },
       ],
       doItems: ["Composição com respiro e foco", "Luz natural ou monocromática", "Contexto de uso real", "Pessoas em situação genuína"],
@@ -559,13 +559,13 @@ function getImageStyleData(brand: BrandData) {
     };
   }
 
-  // Default: marcas de serviço/outros — totalmente personalizado com dados reais
+  // Default: marcas de serviço/outros - totalmente personalizado com dados reais
   const isMinimal = estiloVisual.includes("minimal");
   const isBold = estiloVisual.includes("bold") || estiloVisual.includes("impactante");
   return {
     intro: `Imagens de ${brand.name} devem comunicar autenticidade e proximidade com ${publicoAlvo}. ${isMinimal ? "Composição limpa, espaço negativo generoso e cores alinhadas à paleta." : isBold ? "Visual impactante, composições dinâmicas e uso intencional da paleta da marca." : "Iluminação equilibrada, contexto real e expressões genuínas em primeiro lugar."}`,
     categories: [
-      { t: "Produto ou Serviço", desc: `Valorize o que ${brand.name} entrega — cenário limpo, iluminação adequada e foco no que mais importa para ${publicoAlvo}.`, icon: "✨", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
+      { t: "Produto ou Serviço", desc: `Valorize o que ${brand.name} entrega - cenário limpo, iluminação adequada e foco no que mais importa para ${publicoAlvo}.`, icon: "✨", gradient: `linear-gradient(135deg, ${primary}22 0%, ${secondary}33 50%, ${accent}22 100%)` },
       { t: "Pessoas & Cultura", desc: "Equipe real em ação, colaboração genuína e diversidade. Evite poses corporativas artificiais.", icon: "💼", gradient: `linear-gradient(135deg, ${accent}22 0%, ${primary}33 50%, ${secondary}22 100%)` },
       { t: "Contexto & Lifestyle", desc: `${publicoAlvo} interagindo com a marca no cotidiano. Situações verossímeis que criam identificação.`, icon: "📸", gradient: `linear-gradient(135deg, ${secondary}22 0%, ${accent}33 50%, ${primary}22 100%)` },
     ],
@@ -1236,7 +1236,7 @@ function BrandBookRoute() {
           <h1 className="text-3xl sm:text-5xl md:text-7xl font-semibold tracking-tight max-w-4xl leading-tight">
             {(() => {
               const headline = getCleanHeroTitle(brand);
-              const splitChar = headline.includes(" — ") ? " — " : headline.includes(", ") ? ", " : null;
+              const splitChar = headline.includes(" - ") ? " - " : headline.includes(", ") ? ", " : null;
               if (splitChar) {
                 const [part1, ...rest] = headline.split(splitChar);
                 return <>{part1}{splitChar}<span className="text-primary">{rest.join(splitChar)}</span></>;
@@ -1315,7 +1315,7 @@ function BrandBookRoute() {
             </div>
             <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
               <Meta k="Construção" v="Wordmark + símbolo geométrico baseado em dois 'M' espelhados." />
-              <Meta k="Conceito" v="Conectividade, simetria e camadas — sistemas que se encaixam." />
+              <Meta k="Conceito" v="Conectividade, simetria e camadas - sistemas que se encaixam." />
               <Meta k="Formato" v="SVG vetorial. Distribuir em .svg, .pdf e .png." />
             </div>
           </div>
@@ -1351,8 +1351,8 @@ function BrandBookRoute() {
           {/* Sizes */}
           <h3 className="mt-14 mb-4 text-lg md:text-xl font-semibold">Tamanhos mínimos</h3>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5">
-            <SizeCard label="Digital — wordmark" min="120 px de largura" sample={<DynamicLogoMark logoUrl={brand.logoUrl} symbolUrl={brand.symbolUrl} logoReverseUrl={brand.logoReverseUrl} symbolReverseUrl={brand.symbolReverseUrl} brandName={brand.name} variant="original" className="w-[160px] h-10 object-contain" />} />
-            <SizeCard label="Digital — só símbolo" min="24 px de altura" sample={<DynamicLogoMark logoUrl={brand.logoUrl} symbolUrl={brand.symbolUrl} logoReverseUrl={brand.logoReverseUrl} symbolReverseUrl={brand.symbolReverseUrl} brandName={brand.name} variant="original" withWordmark={false} className="h-10 w-10 object-contain" />} />
+            <SizeCard label="Digital - wordmark" min="120 px de largura" sample={<DynamicLogoMark logoUrl={brand.logoUrl} symbolUrl={brand.symbolUrl} logoReverseUrl={brand.logoReverseUrl} symbolReverseUrl={brand.symbolReverseUrl} brandName={brand.name} variant="original" className="w-[160px] h-10 object-contain" />} />
+            <SizeCard label="Digital - só símbolo" min="24 px de altura" sample={<DynamicLogoMark logoUrl={brand.logoUrl} symbolUrl={brand.symbolUrl} logoReverseUrl={brand.logoReverseUrl} symbolReverseUrl={brand.symbolReverseUrl} brandName={brand.name} variant="original" withWordmark={false} className="h-10 w-10 object-contain" />} />
             <SizeCard label="Impressão" min="20 mm de largura" sample={<DynamicLogoMark logoUrl={brand.logoUrl} symbolUrl={brand.symbolUrl} logoReverseUrl={brand.logoReverseUrl} symbolReverseUrl={brand.symbolReverseUrl} brandName={brand.name} variant="original" className="w-[140px] h-8 object-contain" />} />
           </div>
 
@@ -1788,11 +1788,11 @@ function BrandBookRoute() {
       <Section id="motion" eyebrow="07 · Motion" title="Princípios de movimento">
         <div className="space-y-8">
           <p className="text-sm text-muted-foreground max-w-2xl">
-            Movimento discreto e funcional — nunca decorativo. Toda transição tem o propósito de orientar.
+            Movimento discreto e funcional - nunca decorativo. Toda transição tem o propósito de orientar.
           </p>
           <div className="grid sm:grid-cols-3 gap-4">
             <MotionCard k="Duração" v="120–240ms para UI. 400–600ms para hero." />
-            <MotionCard k="Easing" v="cubic-bezier(0.2, 0.8, 0.2, 1) — natural ease-out." />
+            <MotionCard k="Easing" v="cubic-bezier(0.2, 0.8, 0.2, 1) - natural ease-out." />
             <MotionCard k="Distância" v="≤ 12px. Movimentos longos quebram o ritmo." />
           </div>
           <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 overflow-hidden">
@@ -2883,11 +2883,38 @@ const compressSignaturePhoto = (base64Str: string): Promise<string> => {
   });
 };
 
+interface PhoneEntry {
+  id: string;
+  type: "whatsapp" | "tel";
+  number: string;
+}
+
+function formatPhoneNumber(value: string): string {
+  let digits = value.replace(/\D/g, "");
+  if (digits.startsWith("55") && digits.length > 11) {
+    digits = digits.slice(2);
+  }
+  digits = digits.slice(0, 11);
+  if (!digits) return "";
+  if (digits.length <= 2) {
+    return `(${digits}`;
+  }
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+}
+
 function EmailSignatureSection({ brand }: { brand: BrandData }) {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phones, setPhones] = useState<PhoneEntry[]>([
+    { id: "1", type: "whatsapp", number: "" }
+  ]);
   const [photoBase64, setPhotoBase64] = useState<string>("");
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2904,11 +2931,42 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
     reader.readAsDataURL(file);
   };
 
+  const handleAddPhone = () => {
+    if (phones.length < 2) {
+      setPhones((prev) => [
+        ...prev,
+        { id: String(Date.now()), type: "tel", number: "" }
+      ]);
+    }
+  };
+
+  const handleRemovePhone = (index: number) => {
+    if (phones.length > 1) {
+      setPhones((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const handlePhoneChange = (index: number, val: string) => {
+    const formatted = formatPhoneNumber(val);
+    setPhones((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], number: formatted };
+      return updated;
+    });
+  };
+
+  const handlePhoneTypeChange = (index: number, type: "whatsapp" | "tel") => {
+    setPhones((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], type };
+      return updated;
+    });
+  };
+
   const primaryColor = brand.palette.primary[0].hex;
   const displayName = name.trim() || "Nome Sobrenome";
   const displayRole = role.trim() || "Cargo / Função";
   const displayEmail = email.trim() || `contato@${brand.id}.com.br`;
-  const displayPhone = phone.trim() || "+55 (00) 00000-0000";
   const initials = (name.trim() || "NS")
     .split(/\s+/)
     .filter(Boolean)
@@ -2916,6 +2974,26 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
     .slice(0, 2)
     .join("")
     .toUpperCase() || "NS";
+
+  const activePhones = phones.filter((p) => p.number.trim().length > 0);
+  const displayPhones = activePhones.length > 0
+    ? activePhones.map((p) => {
+        const rawDigits = p.number.replace(/\D/g, "");
+        return {
+          label: p.type === "whatsapp" ? "WhatsApp" : "Tel",
+          formatted: p.number,
+          href: p.type === "whatsapp" ? `https://wa.me/55${rawDigits}` : `tel:+55${rawDigits}`
+        };
+      })
+    : [{
+        label: "WhatsApp",
+        formatted: "+55 (00) 00000-0000",
+        href: "#"
+      }];
+
+  const phoneHtmlRows = displayPhones.map((p) => 
+    `<div>${p.label}: <a href="${p.href}" style="color: #666666; text-decoration: none;">${p.formatted}</a></div>`
+  ).join("\n        ");
 
   // Simple clean HTML signature markup
   const signatureHtml = `<table cellpadding="0" cellspacing="0" border="0" style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; color: #1a1a1a;">
@@ -2934,7 +3012,7 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
       <div style="font-size: 13px; color: #666666;">${displayRole} &middot; ${brand.name}</div>
       <div style="margin-top: 8px; font-size: 12px; color: #666666; font-family: monospace;">
         <div>Email: <a href="mailto:${displayEmail}" style="color: ${primaryColor}; text-decoration: none;">${displayEmail}</a></div>
-        <div>Tel: ${displayPhone}</div>
+        ${phoneHtmlRows}
         <div>Site: <a href="https://${brand.id}.com" style="color: ${primaryColor}; text-decoration: none;">${brand.id}.com</a></div>
       </div>
     </td>
@@ -3021,19 +3099,59 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
                 className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 placeholder:text-muted-foreground/50"
               />
             </div>
+
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5 mb-1.5">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted-foreground/70"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                Telefone / WhatsApp
-              </label>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Ex: +55 (11) 99999-9999"
-                className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 placeholder:text-muted-foreground/50"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted-foreground/70"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  Telefone / WhatsApp {phones.length > 1 ? `(${phones.length}/2)` : ""}
+                </label>
+                {phones.length < 2 && (
+                  <button
+                    type="button"
+                    onClick={handleAddPhone}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Adicionar 2º número
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-2.5">
+                {phones.map((p, index) => (
+                  <div key={p.id} className="flex items-center gap-2">
+                    <select
+                      value={p.type}
+                      onChange={(e) => handlePhoneTypeChange(index, e.target.value as "whatsapp" | "tel")}
+                      className="px-2.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 font-medium shrink-0 cursor-pointer"
+                    >
+                      <option value="whatsapp">WhatsApp</option>
+                      <option value="tel">Telefone</option>
+                    </select>
+                    <input
+                      type="tel"
+                      value={p.number}
+                      onChange={(e) => handlePhoneChange(index, e.target.value)}
+                      placeholder={p.type === "whatsapp" ? "Ex: (11) 99999-9999" : "Ex: (11) 3333-4444"}
+                      maxLength={15}
+                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 placeholder:text-muted-foreground/50"
+                    />
+                    {phones.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhone(index)}
+                        title="Remover este número"
+                        className="p-2.5 rounded-xl border border-border text-muted-foreground hover:text-red-500 hover:border-red-500/30 hover:bg-red-500/10 transition-all duration-200 shrink-0 cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
+
             <div>
               <label className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5 mb-1.5">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted-foreground/70"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -3045,7 +3163,7 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
                   <button
                     type="button"
                     onClick={() => setPhotoBase64("")}
-                    className="text-xs font-semibold text-red-600 hover:text-red-700"
+                    className="text-xs font-semibold text-red-600 hover:text-red-700 cursor-pointer"
                   >
                     Remover Foto
                   </button>
@@ -3157,7 +3275,11 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
                     <div style={{ fontSize: "13px", color: "#666666" }}>{displayRole} &middot; {brand.name}</div>
                     <div style={{ marginTop: "8px", fontSize: "12px", color: "#666666", fontFamily: "monospace" }}>
                       <div>Email: <a href={`mailto:${displayEmail}`} style={{ color: primaryColor, textDecoration: "none" }}>{displayEmail}</a></div>
-                      <div>Tel: {displayPhone}</div>
+                      {displayPhones.map((p, idx) => (
+                        <div key={idx}>
+                          {p.label}: <a href={p.href} style={{ color: "#666666", textDecoration: "none" }}>{p.formatted}</a>
+                        </div>
+                      ))}
                       <div>Site: <a href={`https://${brand.id}.com`} style={{ color: primaryColor, textDecoration: "none" }}>{brand.id}.com</a></div>
                     </div>
                   </td>
@@ -3170,4 +3292,6 @@ function EmailSignatureSection({ brand }: { brand: BrandData }) {
     </div>
   );
 }
+
+
 

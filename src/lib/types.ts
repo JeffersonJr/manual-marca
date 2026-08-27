@@ -4,7 +4,7 @@
  */
 
 // ---------------------------------------------------------------------------
-// Briefing — dados coletados nos formulários de criação (Fluxo A e B)
+// Briefing - dados coletados nos formulários de criação (Fluxo A e B)
 // ---------------------------------------------------------------------------
 export interface BriefingData {
   // === Obrigatório ===
@@ -45,7 +45,7 @@ export interface BrandPalette {
 }
 
 // ---------------------------------------------------------------------------
-// Brand — entidade principal armazenada no KV e localStorage
+// Brand - entidade principal armazenada no KV e localStorage
 // ---------------------------------------------------------------------------
 export interface Brand {
   id: string;

@@ -94,52 +94,52 @@ function synthesizeHeroHeadline(brand: Partial<Brand> & { briefing?: BriefingDat
   // 1. Nicho Imobiliário / Arquitetura / Construção
   if (nicho.includes("imóv") || nicho.includes("imobil") || nicho.includes("constru") || nicho.includes("arquit") || /imobili[áa]r|im[óo]veis/i.test(brand.description || "")) {
     if (location) {
-      return `${name} — Imóveis e consultoria de confiança em ${location}.`;
+      return `${name} - Imóveis e consultoria de confiança em ${location}.`;
     }
     if (hasTransparencia) {
-      return `${name} — Negociações imobiliárias com transparência total.`;
+      return `${name} - Negociações imobiliárias com transparência total.`;
     }
-    return `${name} — Encontre o imóvel ideal com segurança e agilidade.`;
+    return `${name} - Encontre o imóvel ideal com segurança e agilidade.`;
   }
 
   // 2. Nicho Tech / Software / SaaS / Digital
   if (nicho.includes("tech") || nicho.includes("software") || nicho.includes("saas") || nicho.includes("tecnolog") || nicho.includes("digital")) {
     if (tom.includes("direto") || tom.includes("formal")) {
-      return `${name} — Tecnologia inteligente para operações críticas.`;
+      return `${name} - Tecnologia inteligente para operações críticas.`;
     }
-    return `${name} — Soluções digitais que simplificam o seu negócio.`;
+    return `${name} - Soluções digitais que simplificam o seu negócio.`;
   }
 
   // 3. Nicho Saúde / Clínica / Estética
   if (nicho.includes("saúd") || nicho.includes("saude") || nicho.includes("clínic") || nicho.includes("médic") || nicho.includes("estétic")) {
-    return `${name} — Cuidado humanizado e excelência em saúde.`;
+    return `${name} - Cuidado humanizado e excelência em saúde.`;
   }
 
   // 4. Nicho Moda / Luxo / Design
   if (nicho.includes("moda") || nicho.includes("fashion") || nicho.includes("luxo") || nicho.includes("design")) {
-    return `${name} — Design autêntico e sofisticação contemporânea.`;
+    return `${name} - Design autêntico e sofisticação contemporânea.`;
   }
 
   // 5. Nicho Gastronomia / Alimentação
   if (nicho.includes("aliment") || nicho.includes("restauran") || nicho.includes("food") || nicho.includes("café")) {
-    return `${name} — Experiência gastronômica com sabor e essência.`;
+    return `${name} - Experiência gastronômica com sabor e essência.`;
   }
 
   // 6. Nicho Educação / Cursos
   if (nicho.includes("educa") || nicho.includes("ensino") || nicho.includes("curso")) {
-    return `${name} — Conhecimento prático que transforma trajetórias.`;
+    return `${name} - Conhecimento prático que transforma trajetórias.`;
   }
 
   // 7. Nicho Financeiro / Contábil / Jurídico / Consultoria
   if (nicho.includes("finan") || nicho.includes("contab") || nicho.includes("juríd") || nicho.includes("advoc") || nicho.includes("consult")) {
-    return `${name} — Gestão estratégica com máxima precisão e segurança.`;
+    return `${name} - Gestão estratégica com máxima precisão e segurança.`;
   }
 
   // Fallback genérico elegante
   if (hasInovacao) {
-    return `${name} — Inovação prática para o seu dia a dia.`;
+    return `${name} - Inovação prática para o seu dia a dia.`;
   }
-  return `${name} — Identidade e propósito que geram valor real.`;
+  return `${name} - Identidade e propósito que geram valor real.`;
 }
 
 /**
@@ -165,7 +165,7 @@ export function getCleanHeroTitle(brand: Partial<Brand> & { heroTitle?: string; 
     if (cleanedPromise.length >= 8 && cleanedPromise.length <= 65 && !isDumpedOrListText(cleanedPromise)) {
       // Se não começa com o nome da marca e é uma frase solta, pode prefixar ou usar direto
       if (!cleanedPromise.toLowerCase().includes(brandName.toLowerCase()) && cleanedPromise.length <= 45) {
-        const combined = `${brandName} — ${cleanedPromise}`;
+        const combined = `${brandName} - ${cleanedPromise}`;
         if (combined.length <= 75) return combined;
       }
       return cleanedPromise;
@@ -179,7 +179,7 @@ export function getCleanHeroTitle(brand: Partial<Brand> & { heroTitle?: string; 
   }
 
   // Corte de segurança estrito
-  return `${brandName} — Identidade que comunica valor.`;
+  return `${brandName} - Identidade que comunica valor.`;
 }
 
 /**

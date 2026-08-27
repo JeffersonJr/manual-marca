@@ -162,8 +162,8 @@ function buildLogoPrompt(briefing: BriefingData, optionNumber: 1 | 2): string {
 
   const variationConcept =
     optionNumber === 1
-      ? "OPÇÃO 1 — Conceito Estruturado & Geométrico: Ícone vetor com linhas precisas, equilíbrio clássico e alta autoridade."
-      : "OPÇÃO 2 — Conceito Dinâmico & Conceitual: Ícone vetor com curvas fluídas, formas sobrepostas ou gradientes que transmitem evolução e modernidade.";
+      ? "OPÇÃO 1 - Conceito Estruturado & Geométrico: Ícone vetor com linhas precisas, equilíbrio clássico e alta autoridade."
+      : "OPÇÃO 2 - Conceito Dinâmico & Conceitual: Ícone vetor com curvas fluídas, formas sobrepostas ou gradientes que transmitem evolução e modernidade.";
 
   // Ajuste inteligente de tamanho de fonte para evitar quebras em nomes longos
   const nameLength = briefing.nome.length;
@@ -422,12 +422,12 @@ export const generateLogosWithAI = createServerFn({ method: "POST" })
           {
             id: `logo-${Date.now()}-1`,
             svgCode: generateFallbackSvg(briefing as BriefingData, 1),
-            concept: "Opção 1 — Identidade Sólida & Estruturada com Ícone e Tipografia (Modo Offline)",
+            concept: "Opção 1 - Identidade Sólida & Estruturada com Ícone e Tipografia (Modo Offline)",
           },
           {
             id: `logo-${Date.now()}-2`,
             svgCode: generateFallbackSvg(briefing as BriefingData, 2),
-            concept: "Opção 2 — Identidade Dinâmica & Contemporânea com Ícone e Tipografia (Modo Offline)",
+            concept: "Opção 2 - Identidade Dinâmica & Contemporânea com Ícone e Tipografia (Modo Offline)",
           },
         ],
       };
@@ -486,8 +486,8 @@ export const generateLogosWithAI = createServerFn({ method: "POST" })
         console.log(`[ai-logo] ✅ Opção ${optionNumber} gerada com sucesso! (${svgCode.length} bytes)`);
 
         const concepts: Record<1 | 2, string> = {
-          1: "Opção 1 — Identidade Sólida & Estruturada com Símbolo e Tipografia",
-          2: "Opção 2 — Identidade Dinâmica & Contemporânea com Símbolo e Tipografia",
+          1: "Opção 1 - Identidade Sólida & Estruturada com Símbolo e Tipografia",
+          2: "Opção 2 - Identidade Dinâmica & Contemporânea com Símbolo e Tipografia",
         };
 
         return {
@@ -504,7 +504,7 @@ export const generateLogosWithAI = createServerFn({ method: "POST" })
         return {
           id: `logo-${Date.now()}-${optionNumber}-fallback`,
           svgCode: generateFallbackSvg(briefing as BriefingData, optionNumber),
-          concept: `Opção ${optionNumber} — gerada localmente (${err?.message || "falha na API"})`,
+          concept: `Opção ${optionNumber} - gerada localmente (${err?.message || "falha na API"})`,
         };
       }
     };
@@ -597,12 +597,12 @@ export const regenerateAllLogosWithAI = createServerFn({ method: "POST" })
           {
             id: `logo-regen-${timestamp}-1`,
             svgCode: generateFallbackSvg(briefing as BriefingData, 1, timestamp % 100),
-            concept: "Nova opção 1 — gerada localmente",
+            concept: "Nova opção 1 - gerada localmente",
           },
           {
             id: `logo-regen-${timestamp}-2`,
             svgCode: generateFallbackSvg(briefing as BriefingData, 2, (timestamp + 50) % 100),
-            concept: "Nova opção 2 — gerada localmente",
+            concept: "Nova opção 2 - gerada localmente",
           },
         ],
       };
@@ -645,14 +645,14 @@ export const regenerateAllLogosWithAI = createServerFn({ method: "POST" })
         return {
           id: `logo-regen-${timestamp}-${optionNumber}`,
           svgCode,
-          concept: `Nova opção ${optionNumber} — regenerada`,
+          concept: `Nova opção ${optionNumber} - regenerada`,
         };
       } catch (err: any) {
         console.error(`[ai-logo] ❌ Erro ao regenerar opção ${optionNumber}:`, err?.message);
         return {
           id: `logo-regen-${timestamp}-${optionNumber}-fallback`,
           svgCode: generateFallbackSvg(briefing as BriefingData, optionNumber, timestamp % 100 + optionNumber * 20),
-          concept: `Nova opção ${optionNumber} — gerada localmente`,
+          concept: `Nova opção ${optionNumber} - gerada localmente`,
         };
       }
     };

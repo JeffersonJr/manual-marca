@@ -62,7 +62,7 @@ function buildAntiClicheRules(briefing: BriefingData): string {
   const tom = briefing.tomDeVoz?.toLowerCase() ?? "";
 
   const rules: string[] = [
-    "REGRAS CRÍTICAS — VIOLAÇÃO RESULTA EM RESPOSTA INVÁLIDA:",
+    "REGRAS CRÍTICAS - VIOLAÇÃO RESULTA EM RESPOSTA INVÁLIDA:",
     `1. Missão, Visão e Promessa devem ser 100% únicas para ${briefing.nome}. Derivadas do cruzamento: Nicho="${briefing.nicho}" + Tom="${briefing.tomDeVoz || "neutro"}" + Público="${briefing.publicoAlvo}".`,
     `2. PROIBIDO usar estas palavras soltas como ideia central: "transformar", "inovar", "excelência", "qualidade", "soluções", "resultados", "impacto".`,
     `3. Os 4 Valores devem ser específicos do contexto "${briefing.nicho}". PROIBIDO: apenas "Inovação", "Qualidade", "Transparência", "Compromisso" sem adjetivo diferenciador.`,
@@ -73,7 +73,7 @@ function buildAntiClicheRules(briefing: BriefingData): string {
   if (nicho.includes("tech") || nicho.includes("software") || nicho.includes("saas") || nicho.includes("tecnologia") || nicho.includes("ti ") || nicho.includes("digital")) {
     rules.push(
       `5. [NICHO TECH] PROIBIDO como heroTitle: "Tecnologia que transforma", "Inovação digital", "Precisão visual". Use metáforas do cotidiano operacional real do cliente.`,
-      `6. [NICHO TECH] A missão NÃO pode começar com "Ser a empresa de tecnologia que..." — seja mais específico ao sub-nicho (${briefing.nicho}).`,
+      `6. [NICHO TECH] A missão NÃO pode começar com "Ser a empresa de tecnologia que..." - seja mais específico ao sub-nicho (${briefing.nicho}).`,
     );
   } else if (nicho.includes("saúde") || nicho.includes("saude") || nicho.includes("clínica") || nicho.includes("clinica") || nicho.includes("médico") || nicho.includes("medico") || nicho.includes("hospital") || nicho.includes("estética")) {
     rules.push(
@@ -157,33 +157,33 @@ ${briefingLines.join("\n")}
 Gere um objeto JSON com EXATAMENTE este schema. Não adicione campos extras. Não use markdown.
 
 {
-  "description": "string — 2 frases curtas e elegantes (máximo de 160 caracteres) apresentando o sistema de identidade visual da marca para o nicho ${briefing.nicho}. NÃO liste valores aqui.",
-  "mission": "string — 1-2 frases. A razão de existir da marca no dia a dia. Verbo ativo. Específico ao nicho.",
-  "vision": "string — 1-2 frases. Onde a marca quer chegar. Tangível e ousado, não vago.",
-  "promise": "string — 1 frase curta e direta (máximo de 10 palavras ou 70 caracteres). O compromisso inegociável com o cliente.",
-  "heroTitle": "string — OBRIGATÓRIO: Um título H1 de site de alto impacto, extremamente conciso (máximo de 4 a 8 palavras, limite estrito de 60 caracteres). Exemplo: 'Imóveis exclusivos com transparência total.' ou 'Tecnologia que impulsiona operações reais.' NUNCA inclua listas, múltiplos tópicos, dois pontos (:) ou explicações longas.",
+  "description": "string - 2 frases curtas e elegantes (máximo de 160 caracteres) apresentando o sistema de identidade visual da marca para o nicho ${briefing.nicho}. NÃO liste valores aqui.",
+  "mission": "string - 1-2 frases. A razão de existir da marca no dia a dia. Verbo ativo. Específico ao nicho.",
+  "vision": "string - 1-2 frases. Onde a marca quer chegar. Tangível e ousado, não vago.",
+  "promise": "string - 1 frase curta e direta (máximo de 10 palavras ou 70 caracteres). O compromisso inegociável com o cliente.",
+  "heroTitle": "string - OBRIGATÓRIO: Um título H1 de site de alto impacto, extremamente conciso (máximo de 4 a 8 palavras, limite estrito de 60 caracteres). Exemplo: 'Imóveis exclusivos com transparência total.' ou 'Tecnologia que impulsiona operações reais.' NUNCA inclua listas, múltiplos tópicos, dois pontos (:) ou explicações longas.",
   "values": [
-    { "name": "string — 1-2 palavras. Nome do valor.", "description": "string — 1 frase curta descrevendo o valor em termos visuais ou comportamentais concretos." },
+    { "name": "string - 1-2 palavras. Nome do valor.", "description": "string - 1 frase curta descrevendo o valor em termos visuais ou comportamentais concretos." },
     { "name": "...", "description": "..." },
     { "name": "...", "description": "..." },
     { "name": "...", "description": "..." }
   ],
   "voiceExamples": {
     "ok": [
-      "string — exemplo de comunicação CORRETA da marca (1 frase)",
-      "string — exemplo de comunicação CORRETA da marca (1 frase)",
-      "string — exemplo de comunicação CORRETA da marca (1 frase)"
+      "string - exemplo de comunicação CORRETA da marca (1 frase)",
+      "string - exemplo de comunicação CORRETA da marca (1 frase)",
+      "string - exemplo de comunicação CORRETA da marca (1 frase)"
     ],
     "no": [
-      "string — exemplo de comunicação INCORRETA (fuja deste tom) (1 frase)",
-      "string — exemplo de comunicação INCORRETA (fuja deste tom) (1 frase)",
-      "string — exemplo de comunicação INCORRETA (fuja deste tom) (1 frase)"
+      "string - exemplo de comunicação INCORRETA (fuja deste tom) (1 frase)",
+      "string - exemplo de comunicação INCORRETA (fuja deste tom) (1 frase)",
+      "string - exemplo de comunicação INCORRETA (fuja deste tom) (1 frase)"
     ]
   },
   "paletteNames": {
-    "primary": "string — nome criativo para a cor primária (2-3 palavras, ligado ao universo da marca)",
-    "secondary": "string — nome criativo para a cor secundária",
-    "accent": "string — nome criativo para a cor de acento"
+    "primary": "string - nome criativo para a cor primária (2-3 palavras, ligado ao universo da marca)",
+    "secondary": "string - nome criativo para a cor secundária",
+    "accent": "string - nome criativo para a cor de acento"
   }
 }
 
@@ -205,7 +205,7 @@ function buildPalette(
 
   return {
     primary: [
-      { name: paletteNames.primary, hex: primaryColor, role: "Cor principal da identidade — logotipo, CTAs e elementos de destaque.", token: "--color-brand-primary" },
+      { name: paletteNames.primary, hex: primaryColor, role: "Cor principal da identidade - logotipo, CTAs e elementos de destaque.", token: "--color-brand-primary" },
       { name: "Graphite Ink", hex: "#1A1A1A", role: "Wordmark e texto principal em fundos claros.", token: "--ink" },
     ],
     secondary: [
@@ -214,7 +214,7 @@ function buildPalette(
       { name: "Deep Shadow", hex: "#111827", role: "Fundos escuros e dark UI.", token: "--color-brand-dark" },
     ],
     accent: [
-      { name: paletteNames.accent, hex: accentColor, role: "Acento dinâmico — alertas, badges e elementos interativos.", token: "--color-brand-accent" },
+      { name: paletteNames.accent, hex: accentColor, role: "Acento dinâmico - alertas, badges e elementos interativos.", token: "--color-brand-accent" },
       { name: "Off-White Canvas", hex: "#FDFBF7", role: "Fundo alternativo para materiais impressos e áreas de respiro.", token: "--color-brand-cream" },
     ],
     neutrals: [
